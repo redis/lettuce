@@ -578,6 +578,11 @@ public class RedisTimeSeriesClusterIntegrationTests extends RedisTimeSeriesInteg
         }
     }
 
+    @Override
+    protected boolean mgetReturnsNaN() {
+        return RedisConditions.of(connection).hasVersionGreaterOrEqualsTo("8.8");
+    }
+
     private boolean isRedis810() {
         return RedisConditions.of(connection).hasVersionGreaterOrEqualsTo("8.10");
     }
