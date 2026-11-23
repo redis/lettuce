@@ -62,6 +62,8 @@ import static io.lettuce.core.protocol.CommandType.SAVE;
  * @author Tihomir Mateev
  * @author Ali Takavci
  * @author Seonghwan Lee
+ * @author dae won
+ * @author Yordan Tsintsov
  */
 @SuppressWarnings({ "unchecked", "varargs" })
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
@@ -387,6 +389,24 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(BITPOS, new IntegerOutput<>(codec), args);
     }
 
+    Command<K, V, List<Long>> bitrangeintarray(K key, long start, long end) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKey(key).add(start).add(end);
+        return createCommand(BITRANGEINTARRAY, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> bitrangeintarray(K key, long start, long end, BitRangeIntArrayArgs bitRangeIntArrayArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(bitRangeIntArrayArgs, "BitRangeIntArrayArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKey(key).add(start).add(end);
+        bitRangeIntArrayArgs.build(args);
+        return createCommand(BITRANGEINTARRAY, new IntegerListOutput<>(codec), args);
+    }
+
     Command<K, V, V> blmove(K source, K destination, LMoveArgs lMoveArgs, long timeout) {
         LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
@@ -409,6 +429,17 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         lMoveArgs.build(args);
         args.add(timeout);
         return createCommand(BLMOVE, new ValueOutput<>(codec), args);
+    }
+
+    Command<K, V, List<V>> blmovem(K source, K destination, BLMovemArgs blMovemArgs) {
+        LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(blMovemArgs, "BLMovemArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKey(source).addKey(destination);
+        blMovemArgs.build(args);
+        return createCommand(BLMOVEM, new ValueListOutput<>(codec), args);
     }
 
     Command<K, V, KeyValue<K, List<V>>> blmpop(long timeout, LMPopArgs lmPopArgs, K... keys) {
@@ -528,6 +559,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     Command<K, V, String> clientNoEvict(boolean on) {
         CommandArgs<K, V> args = new CommandArgs<>(codec).add("NO-EVICT").add(on ? ON : OFF);
+        return createCommand(CLIENT, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> clientNoTouch(boolean on) {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add("NO-TOUCH").add(on ? ON : OFF);
         return createCommand(CLIENT, new StatusOutput<>(codec), args);
     }
 
@@ -1313,7 +1349,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     Command<K, V, Double> geodist(K key, V from, V to, GeoArgs.Unit unit) {
         notNullKey(key);
         LettuceAssert.notNull(from, "From " + MUST_NOT_BE_NULL);
-        LettuceAssert.notNull(from, "To " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(to, "To " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(from).addValue(to);
 
@@ -1839,6 +1875,35 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(HSET, new IntegerOutput<>(codec), args);
     }
 
+    Command<K, V, String> himportPrepare(HashImport<K> fieldset) {
+        LettuceAssert.notNull(fieldset, "HashImport " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(PREPARE).addKey(fieldset.name()).addKeys(fieldset.fields());
+        return createCommand(HIMPORT, new StatusOutput<>(codec), args);
+    }
+
+    HashImportSetCommand<K, V> himportSet(K key, HashImport<K> fieldset, V... values) {
+        notNullKey(key);
+        LettuceAssert.notNull(fieldset, "HashImport " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(values, "Values " + MUST_NOT_BE_NULL);
+
+        if (values.length != fieldset.size()) {
+            throw new IllegalArgumentException("Number of values (" + values.length
+                    + ") must match the number of fields in the fieldset (" + fieldset.size() + ")");
+        }
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandType.SET).addKey(key).addKey(fieldset.name())
+                .addValues(values);
+        return new HashImportSetCommand<>(HIMPORT, new StatusOutput<>(codec), args, fieldset, codec);
+    }
+
+    Command<K, V, Boolean> himportDiscard(HashImport<K> fieldset) {
+        LettuceAssert.notNull(fieldset, "HashImport " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandType.DISCARD).addKey(fieldset.name());
+        return createCommand(HIMPORT, new BooleanOutput<>(codec), args);
+    }
+
     Command<K, V, Long> hsetex(K key, Map<K, V> map) {
         notNullKey(key);
         LettuceAssert.notNull(map, "Map " + MUST_NOT_BE_NULL);
@@ -1961,6 +2026,31 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(INCRBYFLOAT, new DoubleOutput<>(codec), args);
     }
 
+    Command<K, V, IncrexValue<Long>> increx(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        return createCommand(INCREX, new IncrexLongOutput<>(codec), args);
+    }
+
+    Command<K, V, IncrexValue<Long>> increx(K key, long amount, IncrexArgs increxArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(increxArgs, "IncrexArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(BYINT).add(amount);
+        increxArgs.build(args);
+        return createCommand(INCREX, new IncrexLongOutput<>(codec), args);
+    }
+
+    Command<K, V, IncrexValue<Double>> increx(K key, double amount, IncrexFloatArgs increxArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(increxArgs, "IncrexFloatArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(BYFLOAT).add(amount);
+        increxArgs.build(args);
+        return createCommand(INCREX, new IncrexDoubleOutput<>(codec), args);
+    }
+
     Command<K, V, String> info() {
         return createCommand(CommandType.INFO, new StatusOutput<>(codec));
     }
@@ -2052,6 +2142,17 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         args.addKey(source).addKey(destination);
         lMoveArgs.build(args);
         return createCommand(LMOVE, new ValueOutput<>(codec), args);
+    }
+
+    Command<K, V, List<V>> lmovem(K source, K destination, LMovemArgs lMovemArgs) {
+        LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(lMovemArgs, "LMovemArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKey(source).addKey(destination);
+        lMovemArgs.build(args);
+        return createCommand(LMOVEM, new ValueListOutput<>(codec), args);
     }
 
     Command<K, V, KeyValue<K, List<V>>> lmpop(LMPopArgs lmPopArgs, K... keys) {
@@ -2627,6 +2728,56 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         }
     }
 
+    Command<K, V, Boolean> blessSet(K key, BlessFlag flag) {
+        notNullKey(key);
+        LettuceAssert.notNull(flag, "BlessFlag " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandType.SET).addKey(key).add(flag.getToken());
+        return createCommand(BLESS, new BooleanOutput<>(codec), args);
+    }
+
+    Command<K, V, Boolean> blessClear(K key, BlessFlag flag) {
+        notNullKey(key);
+        LettuceAssert.notNull(flag, "BlessFlag " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CLEAR).addKey(key).add(flag.getToken());
+        return createCommand(BLESS, new BooleanOutput<>(codec), args);
+    }
+
+    Command<K, V, List<BlessFlag>> blessGet(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandType.GET).addKey(key);
+        return createCommand(BLESS, new BlessFlagListOutput<>(codec), args);
+    }
+
+    Command<K, V, KeyScanCursor<K>> blessScan(BlessFlag flag) {
+        return blessScan(ScanCursor.INITIAL, flag, null);
+    }
+
+    Command<K, V, KeyScanCursor<K>> blessScan(BlessFlag flag, BlessScanArgs scanArgs) {
+        return blessScan(ScanCursor.INITIAL, flag, scanArgs);
+    }
+
+    Command<K, V, KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag) {
+        return blessScan(scanCursor, flag, null);
+    }
+
+    Command<K, V, KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag, BlessScanArgs scanArgs) {
+        LettuceAssert.notNull(scanCursor, "ScanCursor " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!scanCursor.isFinished(), "ScanCursor must not be finished");
+        LettuceAssert.notNull(flag, "BlessFlag " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandType.SCAN).add(scanCursor.getCursor())
+                .add(flag.getToken());
+
+        if (scanArgs != null) {
+            scanArgs.build(args);
+        }
+
+        return createCommand(BLESS, new KeyScanOutput<>(codec), args);
+    }
+
     Command<K, V, StreamScanCursor> scanStreaming(KeyStreamingChannel<K> channel) {
         notNull(channel);
         LettuceAssert.notNull(channel, "KeyStreamingChannel " + MUST_NOT_BE_NULL);
@@ -2714,6 +2865,38 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(keys);
         return createCommand(SDIFF, new ValueStreamingOutput<>(codec, channel), args);
+    }
+
+    Command<K, V, Long> sdiffcard(K key1, K key2) {
+        LettuceAssert.notNull(key1, "Key1 " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(key2, "Key2 " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(2).addKey(key1).addKey(key2);
+        return createCommand(SDIFFCARD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sdiffcard(List<K> keys) {
+        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!keys.isEmpty(), "Keys " + MUST_NOT_BE_EMPTY);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.size()).addKeys(keys);
+        return createCommand(SDIFFCARD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sdiffcard(K key1, K key2, SDiffCardArgs sdiffCardArgs) {
+        LettuceAssert.notNull(key1, "Key1 " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(key2, "Key2 " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(sdiffCardArgs, "SDiffCardArgs " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(2).addKey(key1).addKey(key2);
+        sdiffCardArgs.build(args);
+        return createCommand(SDIFFCARD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sdiffcard(List<K> keys, SDiffCardArgs sdiffCardArgs) {
+        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!keys.isEmpty(), "Keys " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.notNull(sdiffCardArgs, "SDiffCardArgs " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.size()).addKeys(keys);
+        sdiffCardArgs.build(args);
+        return createCommand(SDIFFCARD, new IntegerOutput<>(codec), args);
     }
 
     Command<K, V, Long> sdiffstore(K destination, K... keys) {
@@ -3109,10 +3292,33 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(STRALGO, new StringMatchResultOutput<>(codec), args);
     }
 
+    @Deprecated
     Command<K, V, StringMatchResult> lcs(LcsArgs lcsArgs) {
-        LettuceAssert.notNull(lcsArgs, "lcsArgs" + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(lcsArgs, "LcsArgs " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(lcsArgs.hasKeys(),
+                "LcsArgs must carry keys, use LcsArgs.Builder.keys(…) or lcs(key1, key2, LcsArgs) instead");
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
+        lcsArgs.build(args);
+        return createCommand(LCS, new StringMatchResultOutput<>(codec), args);
+    }
+
+    Command<K, V, V> lcs(K key1, K key2) {
+        notNullKey(key1);
+        notNullKey(key2);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key1).addKey(key2);
+        return createCommand(LCS, new ValueOutput<>(codec), args);
+    }
+
+    Command<K, V, StringMatchResult> lcs(K key1, K key2, LcsArgs lcsArgs) {
+        notNullKey(key1);
+        notNullKey(key2);
+        LettuceAssert.notNull(lcsArgs, "LcsArgs " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!lcsArgs.hasKeys(),
+                "LcsArgs must not carry keys, pass the keys as key1 and key2 instead of using LcsArgs.Builder.keys(…)");
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key1).addKey(key2);
         lcsArgs.build(args);
         return createCommand(LCS, new StringMatchResultOutput<>(codec), args);
     }
@@ -3130,6 +3336,38 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(keys);
         return createCommand(SUNION, new ValueStreamingOutput<>(codec, channel), args);
+    }
+
+    Command<K, V, Long> sunioncard(K key1, K key2) {
+        LettuceAssert.notNull(key1, "Key1 " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(key2, "Key2 " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(2).addKey(key1).addKey(key2);
+        return createCommand(SUNIONCARD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sunioncard(List<K> keys) {
+        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!keys.isEmpty(), "Keys " + MUST_NOT_BE_EMPTY);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.size()).addKeys(keys);
+        return createCommand(SUNIONCARD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sunioncard(K key1, K key2, SUnionCardArgs sunionCardArgs) {
+        LettuceAssert.notNull(key1, "Key1 " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(key2, "Key2 " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(sunionCardArgs, "SUnionCardArgs " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(2).addKey(key1).addKey(key2);
+        sunionCardArgs.build(args);
+        return createCommand(SUNIONCARD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sunioncard(List<K> keys, SUnionCardArgs sunionCardArgs) {
+        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!keys.isEmpty(), "Keys " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.notNull(sunionCardArgs, "SUnionCardArgs " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.size()).addKeys(keys);
+        sunionCardArgs.build(args);
+        return createCommand(SUNIONCARD, new IntegerOutput<>(codec), args);
     }
 
     Command<K, V, Long> sunionstore(K destination, K... keys) {
@@ -3267,6 +3505,36 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         }
 
         return createCommand(XACKDEL, new StreamEntryDeletionResultListOutput<>(codec), args);
+    }
+
+    public Command<K, V, Long> xnack(K key, K group, XNackMode mode, String messageId) {
+        notNullKey(key);
+        LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(mode, "XNackMode " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(messageId, "MessageId " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKey(group).add(mode).add(CommandKeyword.IDS).add(1)
+                .add(messageId);
+
+        return createCommand(XNACK, new IntegerOutput<>(codec), args);
+    }
+
+    public Command<K, V, Long> xnack(K key, K group, XNackMode mode, String[] messageIds) {
+        notNullKey(key);
+        LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(mode, "XNackMode " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(messageIds, "MessageIds " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.noNullElements(messageIds, "MessageIds " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKey(group).add(mode);
+
+        args.add(CommandKeyword.IDS).add(messageIds.length);
+
+        for (String messageId : messageIds) {
+            args.add(messageId);
+        }
+
+        return createCommand(XNACK, new IntegerOutput<>(codec), args);
     }
 
     public Command<K, V, ClaimedMessages<K, V>> xautoclaim(K key, XAutoClaimArgs<K> xAutoClaimArgs) {
@@ -3933,6 +4201,74 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZMSCORE, new DoubleListOutput<>(codec), key, members);
     }
 
+    Command<K, V, List<ScoredValue<V>>> zmove(K source, K destination, ZMoveArgs zMoveArgs) {
+        LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(zMoveArgs, "ZMoveArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(source).addKey(destination);
+        zMoveArgs.build(args);
+        return createCommand(ZMOVE, new NullableScoredValueListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<ScoredValue<V>>> bzmove(K source, K destination, BZMoveArgs bzMoveArgs) {
+        LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(bzMoveArgs, "BZMoveArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(source).addKey(destination);
+        bzMoveArgs.build(args);
+        return createCommand(BZMOVE, new NullableScoredValueListOutput<>(codec), args);
+    }
+
+    Command<K, V, ScoredValue<V>> zmovemember(K source, K destination, V member) {
+        LettuceAssert.notNull(member, "Member " + MUST_NOT_BE_NULL);
+        return zmovemember(source, destination, null, member, null, new NullableScoredValueOutput<>(codec));
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zmovemember(K source, K destination, V[] members) {
+        LettuceAssert.notNull(members, "Members " + MUST_NOT_BE_NULL);
+        return zmovemember(source, destination, null, null, members, new NullableScoredValueListOutput<>(codec));
+    }
+
+    Command<K, V, ScoredValue<V>> zmovemember(K source, K destination, ZMoveMemberArgs zMoveMemberArgs, V member) {
+        LettuceAssert.notNull(zMoveMemberArgs, "ZMoveMemberArgs " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(member, "Member " + MUST_NOT_BE_NULL);
+        return zmovemember(source, destination, zMoveMemberArgs, member, null, new NullableScoredValueOutput<>(codec));
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zmovemember(K source, K destination, ZMoveMemberArgs zMoveMemberArgs, V[] members) {
+        LettuceAssert.notNull(zMoveMemberArgs, "ZMoveMemberArgs " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(members, "Members " + MUST_NOT_BE_NULL);
+        return zmovemember(source, destination, zMoveMemberArgs, null, members, new NullableScoredValueListOutput<>(codec));
+    }
+
+    private static final String ZMOVEMEMBER_EXAMPLE = "zmovemember(source, destination, zMoveMemberArgs, member)";
+
+    private <T> Command<K, V, T> zmovemember(K source, K destination, ZMoveMemberArgs zMoveMemberArgs, V member, V[] members,
+            CommandOutput<K, V, T> output) {
+        LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+        if (members != null) {
+            for (V each : members) {
+                notArgumentObject(each, ZMOVEMEMBER_EXAMPLE);
+            }
+        } else {
+            notArgumentObject(member, ZMOVEMEMBER_EXAMPLE);
+        }
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(source).addKey(destination);
+        if (zMoveMemberArgs != null) {
+            zMoveMemberArgs.build(args);
+        }
+        if (members != null) {
+            args.add(MEMBERS).add(members.length).addValues(members);
+        } else {
+            args.add(MEMBERS).add(1).addValue(member);
+        }
+        return createCommand(ZMOVEMEMBER, output, args);
+    }
+
     Command<K, V, KeyValue<K, ScoredValue<V>>> zmpop(ZPopArgs popArgs, K[] keys) {
         notEmpty(keys);
 
@@ -4045,6 +4381,110 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         args.addKey(key).add(start).add(stop).add(WITHSCORES);
         return createCommand(ZRANGE, new ScoredValueStreamingOutput<>(codec, channel), args);
+    }
+
+    Command<K, V, List<V>> zrange(K key, ZRange.ByIndex range) {
+        return createCommand(ZRANGE, new ValueListOutput<>(codec), zrangeArgs(key, range));
+    }
+
+    Command<K, V, List<V>> zrange(K key, ZRange.ByScore range) {
+        return createCommand(ZRANGE, new ValueListOutput<>(codec), zrangeArgs(key, range));
+    }
+
+    Command<K, V, List<V>> zrange(K key, ZRange.ByLex<? extends V> range) {
+        return createCommand(ZRANGE, new ValueListOutput<>(codec), zrangeArgs(key, range));
+    }
+
+    Command<K, V, Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByIndex range) {
+        notNull(channel);
+        return createCommand(ZRANGE, new ValueStreamingOutput<>(codec, channel), zrangeArgs(key, range));
+    }
+
+    Command<K, V, Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByScore range) {
+        notNull(channel);
+        return createCommand(ZRANGE, new ValueStreamingOutput<>(codec, channel), zrangeArgs(key, range));
+    }
+
+    Command<K, V, Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByLex<? extends V> range) {
+        notNull(channel);
+        return createCommand(ZRANGE, new ValueStreamingOutput<>(codec, channel), zrangeArgs(key, range));
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zrangeWithScores(K key, ZRange.ByIndex range) {
+        return createCommand(ZRANGE, new ScoredValueListOutput<>(codec), zrangeArgs(key, range).add(WITHSCORES));
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zrangeWithScores(K key, ZRange.ByScore range) {
+        return createCommand(ZRANGE, new ScoredValueListOutput<>(codec), zrangeArgs(key, range).add(WITHSCORES));
+    }
+
+    Command<K, V, Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, ZRange.ByIndex range) {
+        notNull(channel);
+        return createCommand(ZRANGE, new ScoredValueStreamingOutput<>(codec, channel), zrangeArgs(key, range).add(WITHSCORES));
+    }
+
+    Command<K, V, Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, ZRange.ByScore range) {
+        notNull(channel);
+        return createCommand(ZRANGE, new ScoredValueStreamingOutput<>(codec, channel), zrangeArgs(key, range).add(WITHSCORES));
+    }
+
+    private CommandArgs<K, V> zrangeArgs(K key, ZRange.ByIndex range) {
+        notNullKey(key);
+        LettuceAssert.notNull(range, "ZRange " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(range.getStart()).add(range.getStop());
+
+        if (range.isRev()) {
+            args.add(REV);
+        }
+
+        return args;
+    }
+
+    private CommandArgs<K, V> zrangeArgs(K key, ZRange.ByScore range) {
+        notNullKey(key);
+        LettuceAssert.notNull(range, "ZRange " + MUST_NOT_BE_NULL);
+
+        Range<? extends Number> scoreRange = range.getRange();
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if (range.isRev()) {
+            args.add(max(scoreRange)).add(min(scoreRange));
+        } else {
+            args.add(min(scoreRange)).add(max(scoreRange));
+        }
+
+        args.add(BYSCORE);
+
+        if (range.isRev()) {
+            args.add(REV);
+        }
+
+        addLimit(args, range.getLimit());
+        return args;
+    }
+
+    private CommandArgs<K, V> zrangeArgs(K key, ZRange.ByLex<? extends V> range) {
+        notNullKey(key);
+        LettuceAssert.notNull(range, "ZRange " + MUST_NOT_BE_NULL);
+
+        Range<? extends V> lexRange = range.getRange();
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if (range.isRev()) {
+            args.add(maxValue(lexRange)).add(minValue(lexRange));
+        } else {
+            args.add(minValue(lexRange)).add(maxValue(lexRange));
+        }
+
+        args.add(BYLEX);
+
+        if (range.isRev()) {
+            args.add(REV);
+        }
+
+        addLimit(args, range.getLimit());
+        return args;
     }
 
     RedisCommand<K, V, List<V>> zrangebylex(K key, String min, String max) {
@@ -4719,6 +5159,280 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             return encodeKey(value);
         }
 
+    }
+
+    /**
+     * Precondition shared by the set-member-expiration commands: {@code key} present, at least one member, and the single
+     * member not being an argument object. With a {@code RedisCodec<K, Object>} a call that omits the members, such as
+     * {@code sexpire(key, 10, expireArgs)}, resolves to the single-member overload and the {@link CompositeArgument} would
+     * otherwise travel to the server as the member.
+     */
+    private static void keyAndMembersProvided(Object key, Object[] members) {
+        notNullKey(key);
+        LettuceAssert.notEmpty(members, "Members " + MUST_NOT_BE_EMPTY);
+        if (members.length == 1) {
+            notArgumentObject(members[0]);
+        }
+    }
+
+    /**
+     * Precondition shared by the single-member set-member-expiration commands: {@code key} present and the member not being an
+     * argument object (see {@link #keyAndMembersProvided(Object, Object[])}). No array is created for the member.
+     */
+    private static void keyAndMemberProvided(Object key, Object member) {
+        notNullKey(key);
+        notArgumentObject(member);
+    }
+
+    private static void notArgumentObject(Object member) {
+        notArgumentObject(member, "sexpire(key, seconds, expireArgs, member)");
+    }
+
+    private static void notArgumentObject(Object member, String example) {
+        LettuceAssert.isTrue(!(member instanceof CompositeArgument), () -> "Members must not be a "
+                + member.getClass().getSimpleName() + "; pass the arguments before the members, e.g. " + example);
+    }
+
+    Command<K, V, Long> saddex(K key, V... members) {
+        keyAndMembersProvided(key, members);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(members.length).addValues(members);
+
+        return createCommand(SADDEX, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> saddex(K key, SAddExArgs sAddExArgs, V... members) {
+        keyAndMembersProvided(key, members);
+        LettuceAssert.notNull(sAddExArgs, "SAddExArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        sAddExArgs.build(args);
+        args.add(MEMBERS).add(members.length).addValues(members);
+
+        return createCommand(SADDEX, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> sexpire(K key, long seconds, ExpireArgs expireArgs, V... members) {
+        keyAndMembersProvided(key, members);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(seconds);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(MEMBERS).add(members.length).addValues(members);
+
+        return createCommand(SEXPIRE, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> spexpire(K key, long milliseconds, ExpireArgs expireArgs, V... members) {
+        keyAndMembersProvided(key, members);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(milliseconds);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(MEMBERS).add(members.length).addValues(members);
+
+        return createCommand(SPEXPIRE, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> sexpireat(K key, long timestamp, ExpireArgs expireArgs, V... members) {
+        keyAndMembersProvided(key, members);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(timestamp);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(MEMBERS).add(members.length).addValues(members);
+
+        return createCommand(SEXPIREAT, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> spexpireat(K key, long timestamp, ExpireArgs expireArgs, V... members) {
+        keyAndMembersProvided(key, members);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(timestamp);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(MEMBERS).add(members.length).addValues(members);
+
+        return createCommand(SPEXPIREAT, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> sttl(K key, V... members) {
+        keyAndMembersProvided(key, members);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(members.length).addValues(members);
+
+        return createCommand(STTL, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> spttl(K key, V... members) {
+        keyAndMembersProvided(key, members);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(members.length).addValues(members);
+
+        return createCommand(SPTTL, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> sexpiretime(K key, V... members) {
+        keyAndMembersProvided(key, members);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(members.length).addValues(members);
+
+        return createCommand(SEXPIRETIME, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> spexpiretime(K key, V... members) {
+        keyAndMembersProvided(key, members);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(members.length).addValues(members);
+
+        return createCommand(SPEXPIRETIME, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> spersist(K key, V... members) {
+        keyAndMembersProvided(key, members);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(members.length).addValues(members);
+
+        return createCommand(SPERSIST, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> saddex(K key, V member) {
+        keyAndMemberProvided(key, member);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(1).addValue(member);
+
+        return createCommand(SADDEX, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> saddex(K key, SAddExArgs sAddExArgs, V member) {
+        keyAndMemberProvided(key, member);
+        LettuceAssert.notNull(sAddExArgs, "SAddExArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        sAddExArgs.build(args);
+        args.add(MEMBERS).add(1).addValue(member);
+
+        return createCommand(SADDEX, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sexpire(K key, long seconds, ExpireArgs expireArgs, V member) {
+        keyAndMemberProvided(key, member);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(seconds);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(MEMBERS).add(1).addValue(member);
+
+        return createCommand(SEXPIRE, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> spexpire(K key, long milliseconds, ExpireArgs expireArgs, V member) {
+        keyAndMemberProvided(key, member);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(milliseconds);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(MEMBERS).add(1).addValue(member);
+
+        return createCommand(SPEXPIRE, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sexpireat(K key, long timestamp, ExpireArgs expireArgs, V member) {
+        keyAndMemberProvided(key, member);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(timestamp);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(MEMBERS).add(1).addValue(member);
+
+        return createCommand(SEXPIREAT, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> spexpireat(K key, long timestamp, ExpireArgs expireArgs, V member) {
+        keyAndMemberProvided(key, member);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(timestamp);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(MEMBERS).add(1).addValue(member);
+
+        return createCommand(SPEXPIREAT, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sttl(K key, V member) {
+        keyAndMemberProvided(key, member);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(1).addValue(member);
+
+        return createCommand(STTL, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> spttl(K key, V member) {
+        keyAndMemberProvided(key, member);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(1).addValue(member);
+
+        return createCommand(SPTTL, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sexpiretime(K key, V member) {
+        keyAndMemberProvided(key, member);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(1).addValue(member);
+
+        return createCommand(SEXPIRETIME, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> spexpiretime(K key, V member) {
+        keyAndMemberProvided(key, member);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(1).addValue(member);
+
+        return createCommand(SPEXPIRETIME, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> spersist(K key, V member) {
+        keyAndMemberProvided(key, member);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(1).addValue(member);
+
+        return createCommand(SPERSIST, new IntegerOutput<>(codec), args);
     }
 
 }

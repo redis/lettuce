@@ -51,8 +51,8 @@ class RedisCommandsSyncIntegrationTests extends TestSupport {
         MultipleExecutionModels api = factory.getCommands(MultipleExecutionModels.class);
 
         api.setSync(key, value, Timeout.create(10, TimeUnit.SECONDS));
-        assertThat(api.get("key")).isEqualTo("value");
-        assertThat(api.getAsBytes("key")).isEqualTo("value".getBytes());
+        assertThat(api.get(key)).isEqualTo(value);
+        assertThat(api.getAsBytes(key)).isEqualTo(value.getBytes());
 
         connection.close();
     }
@@ -65,9 +65,10 @@ class RedisCommandsSyncIntegrationTests extends TestSupport {
 
         MultipleExecutionModels api = factory.getCommands(MultipleExecutionModels.class);
 
-        api.setSync(key, value, Timeout.create(10, TimeUnit.SECONDS));
+        // Use a fixed key for this test since getAsBytes() default method hardcodes "key"
+        api.setSync("key", value, Timeout.create(10, TimeUnit.SECONDS));
 
-        assertThat(api.getAsBytes()).isEqualTo("value".getBytes());
+        assertThat(api.getAsBytes()).isEqualTo(value.getBytes());
 
         connection.close();
     }

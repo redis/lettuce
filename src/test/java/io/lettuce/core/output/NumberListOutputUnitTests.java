@@ -8,15 +8,14 @@
 package io.lettuce.core.output;
 
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.json.JsonType;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
+import java.util.Locale;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for {@link NumberListOutput}.
@@ -50,6 +49,66 @@ class NumberListOutputUnitTests {
         assertThat(sut.get().isEmpty()).isFalse();
         assertThat(sut.get().size()).isEqualTo(1);
         assertThat(sut.get().get(0)).isEqualTo(0);
+    }
+
+    @Test
+    void setResp2JsonArray() {
+        NumberListOutput<String, String> sut = new NumberListOutput<>(StringCodec.UTF8);
+        sut.set(ByteBuffer.wrap("[1933,7.5,-2,1.5E2, null]".getBytes()));
+
+        assertThat(sut.get()).containsExactly(1933L, 7.5, -2L, 150.0, null);
+    }
+
+    @Test
+    void setResp2EmptyJsonArray() {
+        NumberListOutput<String, String> sut = new NumberListOutput<>(StringCodec.UTF8);
+        sut.set(ByteBuffer.wrap("[]".getBytes()));
+
+        assertThat(sut.get()).isEmpty();
+    }
+
+    @Test
+    void setResp2LegacyPathNumber() {
+        NumberListOutput<String, String> sut = new NumberListOutput<>(StringCodec.UTF8);
+        sut.set(ByteBuffer.wrap("1933".getBytes()));
+
+        assertThat(sut.get()).containsExactly(1933L);
+    }
+
+    @Test
+    void setResp2KeepsNumberTypes() {
+        NumberListOutput<String, String> sut = new NumberListOutput<>(StringCodec.UTF8);
+        sut.set(ByteBuffer.wrap("[2.0]".getBytes()));
+        sut.set(ByteBuffer.wrap("[1934]".getBytes()));
+
+        assertThat(sut.get()).containsExactly(2.0, 1934L);
+        assertThat(sut.get().get(0)).isInstanceOf(Double.class);
+        assertThat(sut.get().get(1)).isInstanceOf(Long.class);
+    }
+
+    @Test
+    void setIgnoresDefaultLocale() {
+        Locale defaultLocale = Locale.getDefault();
+        Locale.setDefault(Locale.GERMANY);
+
+        try {
+            NumberListOutput<String, String> sut = new NumberListOutput<>(StringCodec.UTF8);
+            sut.set(ByteBuffer.wrap("1929.5".getBytes()));
+            sut.set(ByteBuffer.wrap("[1928.5]".getBytes()));
+
+            assertThat(sut.get()).containsExactly(1929.5, 1928.5);
+        } finally {
+            Locale.setDefault(defaultLocale);
+        }
+    }
+
+    @Test
+    void setNullBulkString() {
+        NumberListOutput<String, String> sut = new NumberListOutput<>(StringCodec.UTF8);
+        sut.multi(1);
+        sut.set(null);
+
+        assertThat(sut.get()).containsExactly((Number) null);
     }
 
 }

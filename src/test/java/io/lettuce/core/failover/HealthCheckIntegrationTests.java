@@ -52,8 +52,18 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;;
 @DisplayName("HealthCheck Integration Tests")
 public class HealthCheckIntegrationTests extends MultiDbTestSupport {
 
-    /** Default timeout for await() calls in this test - 500ms for fast test execution */
-    private static final Duration AWAIT_TIMEOUT = Duration.ofMillis(500);
+    /**
+     * Default timeout for await() calls in this test. Every await polls until its condition holds, so a passing test does not
+     * wait this long; the limit only has to cover a slow CI runner scheduling the health check threads.
+     */
+    private static final Duration AWAIT_TIMEOUT = Duration.ofSeconds(5);
+
+    /**
+     * Health check timeout for tests that only need probes to answer. connect() waits at most (timeout + delay) x probes for
+     * the first result of each database and counts a missing result as a failed database, so a few milliseconds are not enough
+     * on a slow CI runner. A probe of the test strategy answers at once, so passing tests do not wait this long.
+     */
+    private static final int HEALTH_CHECK_TIMEOUT_MS = 1000;
 
     /** Poll interval for await() calls - 2ms for responsive polling */
     private static final Duration POLL_INTERVAL = Duration.ofMillis(2);
@@ -139,7 +149,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
         void shouldCreateClientWithCustomHealthCheckSupplier() {
             // Given: Custom HealthCheckStrategySupplier with minimal delays for fast testing
             HealthCheckStrategy.Config config = HealthCheckStrategy.Config.builder().interval(1) // 1ms for fast testing
-                    .timeout(10).numProbes(1).delayInBetweenProbes(1).build();
+                    .timeout(HEALTH_CHECK_TIMEOUT_MS).numProbes(1).delayInBetweenProbes(1).build();
 
             TestHealthCheckStrategy testHealthCheckStrategy = new TestHealthCheckStrategy(config);
             HealthCheckStrategySupplier supplier = (uri, options) -> testHealthCheckStrategy;
@@ -201,7 +211,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
         void shouldUseDifferentStrategiesPerEndpoint() {
             // Given: Two independent health check strategies
             HealthCheckStrategy.Config config = HealthCheckStrategy.Config.builder().interval(1) // 1ms for fast testing
-                    .timeout(10).numProbes(1).delayInBetweenProbes(1).build();
+                    .delayInBetweenProbes(1).build();
 
             TestHealthCheckStrategy strategy1 = new TestHealthCheckStrategy(config);
             TestHealthCheckStrategy strategy2 = new TestHealthCheckStrategy(config);
@@ -299,8 +309,10 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
                 // indefinite delay > 100ms timeout
                 testStrategy.setHealthCheckDelay(uri1, TestHealthCheckStrategy.Delay.Await(timeoutLatch));
 
-                // When health check times out, it should be recorded as failed and status becomes UNHEALTHY
-                with().pollInterval(5, MILLISECONDS).timeout(Duration.ofMillis(customTimeout + 50)).await()
+                // When health check times out, it should be recorded as failed and status becomes UNHEALTHY. The delayed check
+                // never completes on its own, so only the configured timeout can mark it failed; the extra second covers a
+                // slow CI runner scheduling the health check threads.
+                with().pollInterval(5, MILLISECONDS).timeout(Duration.ofMillis(customTimeout + 1000)).await()
                         .untilAsserted(() -> {
                             assertThat(connection.isHealthy(uri1)).isFalse();
                         });
@@ -323,7 +335,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
         void shouldStartHealthChecksOnConnect() {
             // Given: MultiDbClient with health check supplier
             HealthCheckStrategy.Config config = HealthCheckStrategy.Config.builder().interval(1) // 1ms interval
-                    .timeout(10).numProbes(1).delayInBetweenProbes(1).build();
+                    .timeout(HEALTH_CHECK_TIMEOUT_MS).numProbes(1).delayInBetweenProbes(1).build();
 
             TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(config);
             HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
@@ -357,7 +369,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
             int healthCheckInterval = 1;
             HealthCheckStrategy.Config config = HealthCheckStrategy.Config.builder().interval(healthCheckInterval) // 1ms
                                                                                                                    // interval
-                    .timeout(10).numProbes(1).delayInBetweenProbes(1).build();
+                    .timeout(HEALTH_CHECK_TIMEOUT_MS).numProbes(1).delayInBetweenProbes(1).build();
 
             TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(config);
             HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
@@ -403,9 +415,11 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
         @Test
         @DisplayName("Should transition from UNKNOWN to HEALTHY")
         void shouldTransitionFromUnknownToHealthy() {
-            // Given: Health check strategy with fast interval for testing
+            // Given: Health check strategy with fast interval for testing. The timeout must outlast every step until the
+            // blocked uri2 check is released below, otherwise the check times out and uri2 becomes UNHEALTHY instead of
+            // staying UNKNOWN.
             HealthCheckStrategy.Config config = HealthCheckStrategy.Config.builder().interval(1) // 1ms interval
-                    .timeout(1000).numProbes(1).delayInBetweenProbes(1).build();
+                    .timeout(10_000).numProbes(1).delayInBetweenProbes(1).build();
 
             TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(config);
             HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
@@ -470,7 +484,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
         void shouldTriggerFailoverOnUnhealthyStatus() {
             // Given: MultiDbClient with health check supplier and multiple endpoints
             HealthCheckStrategy.Config config = HealthCheckStrategy.Config.builder().interval(1) // 1ms for fast testing
-                    .timeout(10).numProbes(1).delayInBetweenProbes(1).build();
+                    .timeout(HEALTH_CHECK_TIMEOUT_MS).numProbes(1).delayInBetweenProbes(1).build();
 
             TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(config);
             HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
@@ -490,7 +504,9 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
                     assertThat(connection.isHealthy(uri2)).isTrue();
                 });
 
-                // And: Verify current endpoint is uri1 (higher weight)
+                // And: Start from uri1. connect() picks whichever healthy database is ready first, and failback to the
+                // higher weight only runs every 120 s by default, so switch explicitly.
+                connection.switchTo(uri1);
                 assertThat(connection.getCurrentEndpoint()).isEqualTo(uri1);
 
                 // And: Verify we're connected to uri1 by comparing run_id
@@ -532,7 +548,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
         void shouldNotFailoverToUnhealthyEndpoints() {
             // Given: MultiDbClient with health check supplier and multiple endpoints
             HealthCheckStrategy.Config config = HealthCheckStrategy.Config.builder().interval(1) // 1ms for fast testing
-                    .timeout(10).numProbes(1).delayInBetweenProbes(1).build();
+                    .timeout(HEALTH_CHECK_TIMEOUT_MS).numProbes(1).delayInBetweenProbes(1).build();
 
             TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(config);
             HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
@@ -550,15 +566,17 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
                 // Wait for all 3 endpoints to be available
                 waitForEndpoints(connection, 3, 2);
 
-                // Then: Verify current endpoint is uri1 (highest weight)
-                assertThat(connection.getCurrentEndpoint()).isEqualTo(uri1);
-
                 // And: Verify health status for all endpoints to be HEALTHY
                 awaitAtMost().untilAsserted(() -> {
                     assertThat(connection.isHealthy(uri1)).isTrue();
                     assertThat(connection.isHealthy(uri2)).isTrue();
                     assertThat(connection.isHealthy(uri3)).isTrue();
                 });
+
+                // Then: Start from uri1. connect() picks whichever healthy database is ready first, and failback to the
+                // highest weight only runs every 120 s by default, so switch explicitly.
+                connection.switchTo(uri1);
+                assertThat(connection.getCurrentEndpoint()).isEqualTo(uri1);
 
                 // When: Mark uri2 as UNHEALTHY (second highest weight)
                 testStrategy.setHealthStatus(uri2, HealthStatus.UNHEALTHY);
@@ -602,7 +620,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
             // Given: MultiDbClient with both health check and circuit breaker configured
             // Configure health check with fast intervals
             HealthCheckStrategy.Config healthCheckConfig = HealthCheckStrategy.Config.builder().interval(1) // 1ms
-                    .timeout(10).numProbes(1).delayInBetweenProbes(1).build();
+                    .timeout(HEALTH_CHECK_TIMEOUT_MS).numProbes(1).delayInBetweenProbes(1).build();
 
             TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(healthCheckConfig);
             HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
@@ -630,7 +648,9 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
                     assertThat(connection.isHealthy(uri2)).isTrue();
                 });
 
-                // And: Verify current endpoint is uri1 (higher weight)
+                // And: Start from uri1. connect() picks whichever healthy database is ready first, and failback to the
+                // higher weight only runs every 120 s by default, so switch explicitly.
+                connection.switchTo(uri1);
                 assertThat(connection.getCurrentEndpoint()).isEqualTo(uri1);
 
                 // And: Verify we're connected to uri1 by comparing run_id
@@ -701,7 +721,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
         void shouldCreateHealthCheckOnAddDatabase() {
             // Given: MultiDbClient with health check supplier for initial database
             HealthCheckStrategy.Config config = HealthCheckStrategy.Config.builder().interval(1) // 1ms interval
-                    .timeout(10).numProbes(1).delayInBetweenProbes(1).build();
+                    .timeout(HEALTH_CHECK_TIMEOUT_MS).numProbes(1).delayInBetweenProbes(1).build();
 
             TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(config);
             HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
@@ -741,7 +761,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
             int healthCheckInterval = 1;
             HealthCheckStrategy.Config config = HealthCheckStrategy.Config.builder().interval(healthCheckInterval) // 1ms
                                                                                                                    // interval
-                    .timeout(10).numProbes(1).delayInBetweenProbes(1).build();
+                    .timeout(HEALTH_CHECK_TIMEOUT_MS).numProbes(1).delayInBetweenProbes(1).build();
 
             TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(config);
             HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;

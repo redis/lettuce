@@ -10,7 +10,9 @@ import io.lettuce.core.codec.RedisCodec;
  *
  * @param <K> Key type.
  * @param <V> Value type.
+ * @deprecated since 7.8, along with {@link RedisCache}; scheduled for removal in a future major release.
  */
+@Deprecated
 class DefaultRedisCache<K, V> implements RedisCache<K, V> {
 
     private final StatefulRedisConnection<K, V> connection;

@@ -13,13 +13,16 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
 import io.lettuce.core.MaintNotificationsConfig.EndpointTypeSource;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.TestTags;
 import io.lettuce.core.MaintNotificationsConfig.EndpointType;
 
 /**
  * Unit tests for {@link MaintNotificationsConfig}.
  */
+@Tag(TestTags.UNIT_TEST)
 class MaintNotificationsConfigUnitTests {
 
     @Test

@@ -27,7 +27,6 @@ import io.lettuce.core.HotkeysArgs;
 import io.lettuce.core.HotkeysReply;
 import io.lettuce.core.MSetExArgs;
 import io.lettuce.core.Range;
-import io.lettuce.core.SetArgs;
 import io.lettuce.core.api.sync.*;
 import io.lettuce.core.json.JsonParser;
 
@@ -39,13 +38,16 @@ import io.lettuce.core.json.JsonParser;
  * @author Mark Paluch
  * @author dengliming
  * @author Tihomir Mateev
+ * @author Yordan Tsintsov
  * @since 4.0
  */
-public interface RedisClusterCommands<K, V> extends BaseRedisCommands<K, V>, RedisAclCommands<K, V>,
-        RedisFunctionCommands<K, V>, RedisGeoCommands<K, V>, RedisHashCommands<K, V>, RedisHLLCommands<K, V>,
-        RedisKeyCommands<K, V>, RedisListCommands<K, V>, RedisScriptingCommands<K, V>, RedisServerCommands<K, V>,
-        RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>, RedisStreamCommands<K, V>, RedisStringCommands<K, V>,
-        RedisJsonCommands<K, V>, RedisVectorSetCommands<K, V>, RediSearchCommands<K, V> {
+public interface RedisClusterCommands<K, V>
+        extends BaseRedisCommands<K, V>, RedisAclCommands<K, V>, RedisFunctionCommands<K, V>, RedisGeoCommands<K, V>,
+        RedisHashCommands<K, V>, RedisHLLCommands<K, V>, RedisKeyCommands<K, V>, RedisListCommands<K, V>,
+        RedisScriptingCommands<K, V>, RedisServerCommands<K, V>, RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>,
+        RedisStreamCommands<K, V>, RedisStringCommands<K, V>, RedisJsonCommands<K, V>, RedisVectorSetCommands<K, V>,
+        RediSearchCommands<K>, RedisArrayCommands<K, V>, RedisBloomFilterCommands<K, V>, RedisCuckooFilterCommands<K, V>,
+        RedisTopKCommands<K, V>, RedisCMSCommands<K, V>, RedisTDigestCommands<K, V>, RedisTimeSeriesCommands<K> {
 
     /**
      * Set the default timeout for operations. A zero timeout value indicates to not time out.
@@ -404,6 +406,7 @@ public interface RedisClusterCommands<K, V> extends BaseRedisCommands<K, V>, Red
      * HOTKEYS commands are not supported on the cluster client. Use node selection API or target specific nodes via
      * {@code getConnection(nodeId)}.
      *
+     * @param args the command args.
      * @throws UnsupportedOperationException HOTKEYS is a node-specific command
      */
     @Override

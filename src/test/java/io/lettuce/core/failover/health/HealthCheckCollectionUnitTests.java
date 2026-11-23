@@ -4,10 +4,12 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import io.lettuce.TestTags;
 import io.lettuce.core.RedisURI;
 
 /**
@@ -15,6 +17,7 @@ import io.lettuce.core.RedisURI;
  *
  * @author Ivo Gaydazhiev
  */
+@Tag(TestTags.UNIT_TEST)
 class HealthCheckCollectionUnitTests {
 
     @Mock

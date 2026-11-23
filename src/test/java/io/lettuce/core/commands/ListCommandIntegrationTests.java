@@ -37,7 +37,9 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.LMPopArgs;
+import io.lettuce.core.BLMovemArgs;
 import io.lettuce.core.LMoveArgs;
+import io.lettuce.core.LMovemArgs;
 import io.lettuce.core.LPosArgs;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -349,8 +351,8 @@ public class ListCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("LMOVE") // Redis 6.2
     void lmove() {
-        String list1 = key;
-        String list2 = "38o54"; // yields in same slot as "key"
+        String list1 = "{" + key + "}:1";
+        String list2 = "{" + key + "}:2"; // same hash slot as list1 due to hash tag
 
         redis.rpush(list1, "one", "two", "three");
         redis.lmove(list1, list2, LMoveArgs.Builder.rightLeft());
@@ -362,8 +364,8 @@ public class ListCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("BLMOVE") // Redis 6.2
     void blmove() {
-        String list1 = key;
-        String list2 = "38o54"; // yields in same slot as "key"
+        String list1 = "{" + key + "}:1";
+        String list2 = "{" + key + "}:2"; // same hash slot as list1 due to hash tag
 
         redis.rpush(list1, "one", "two", "three");
         redis.blmove(list1, list2, LMoveArgs.Builder.leftRight(), 1000);
@@ -375,14 +377,97 @@ public class ListCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("BLMOVE") // Redis 6.2
     void blmoveDoubleTimeout() {
-        String list1 = key;
-        String list2 = "38o54"; // yields in same slot as "key"
+        String list1 = "{" + key + "}:1";
+        String list2 = "{" + key + "}:2"; // same hash slot as list1 due to hash tag
 
         redis.rpush(list1, "one", "two", "three");
         redis.blmove(list1, list2, LMoveArgs.Builder.leftRight(), 1.5);
 
         assertThat(redis.lrange(list1, 0, -1)).containsExactly("two", "three");
         assertThat(redis.lrange(list2, 0, -1)).containsOnly("one");
+    }
+
+    @Test
+    @EnabledOnCommand("LMOVEM") // Redis 8.10
+    void lmovem() {
+        String list1 = "{" + key + "}:1";
+        String list2 = "{" + key + "}:2"; // same hash slot as list1 due to hash tag
+
+        redis.rpush(list1, "one", "two", "three");
+
+        assertThat(redis.lmovem(list1, list2, LMovemArgs.Builder.rightLeft())).containsExactly("three");
+        assertThat(redis.lrange(list1, 0, -1)).containsExactly("one", "two");
+        assertThat(redis.lrange(list2, 0, -1)).containsExactly("three");
+    }
+
+    @Test
+    @EnabledOnCommand("LMOVEM") // Redis 8.10
+    void lmovemWithCountBulk() {
+        String list1 = "{" + key + "}:1";
+        String list2 = "{" + key + "}:2"; // same hash slot as list1 due to hash tag
+
+        redis.rpush(list1, "1", "2", "3", "4");
+
+        assertThat(redis.lmovem(list1, list2, LMovemArgs.Builder.leftLeft().count(2, LMovemArgs.Ordering.BULK)))
+                .containsExactly("1", "2");
+        assertThat(redis.lrange(list1, 0, -1)).containsExactly("3", "4");
+        assertThat(redis.lrange(list2, 0, -1)).containsExactly("1", "2");
+    }
+
+    @Test
+    @EnabledOnCommand("LMOVEM") // Redis 8.10
+    void lmovemWithCountObo() {
+        String list1 = "{" + key + "}:1";
+        String list2 = "{" + key + "}:2"; // same hash slot as list1 due to hash tag
+
+        redis.rpush(list1, "1", "2", "3", "4");
+
+        // OBO pops and pushes one element at a time, so the two leftmost elements are reversed on the destination.
+        assertThat(redis.lmovem(list1, list2, LMovemArgs.Builder.leftLeft().count(2, LMovemArgs.Ordering.OBO)))
+                .containsExactly("2", "1");
+        assertThat(redis.lrange(list1, 0, -1)).containsExactly("3", "4");
+        assertThat(redis.lrange(list2, 0, -1)).containsExactly("2", "1");
+    }
+
+    @Test
+    @EnabledOnCommand("LMOVEM") // Redis 8.10
+    void lmovemExactlyNotSatisfied() {
+        String list1 = "{" + key + "}:1";
+        String list2 = "{" + key + "}:2"; // same hash slot as list1 due to hash tag
+
+        redis.rpush(list1, "1", "2");
+
+        // The source has fewer than the requested elements, so the nil reply surfaces as an empty list.
+        assertThat(redis.lmovem(list1, list2, LMovemArgs.Builder.leftLeft().exactly(3, LMovemArgs.Ordering.BULK))).isEmpty();
+        assertThat(redis.lrange(list1, 0, -1)).containsExactly("1", "2");
+        assertThat(redis.exists(list2)).isEqualTo(0L);
+    }
+
+    @Test
+    @EnabledOnCommand("BLMOVEM") // Redis 8.10
+    void blmovem() {
+        String list1 = "{" + key + "}:1";
+        String list2 = "{" + key + "}:2"; // same hash slot as list1 due to hash tag
+
+        redis.rpush(list1, "one", "two", "three");
+
+        assertThat(redis.blmovem(list1, list2, BLMovemArgs.Builder.leftLeft().timeout(1000).count(2, LMovemArgs.Ordering.BULK)))
+                .containsExactly("one", "two");
+        assertThat(redis.lrange(list1, 0, -1)).containsExactly("three");
+        assertThat(redis.lrange(list2, 0, -1)).containsExactly("one", "two");
+    }
+
+    @Test
+    @EnabledOnCommand("BLMOVEM") // Redis 8.10
+    void blmovemDoubleTimeout() {
+        String list1 = "{" + key + "}:1";
+        String list2 = "{" + key + "}:2"; // same hash slot as list1 due to hash tag
+
+        redis.rpush(list1, "one", "two", "three");
+
+        assertThat(redis.blmovem(list1, list2, BLMovemArgs.Builder.rightLeft().timeout(1.5))).containsExactly("three");
+        assertThat(redis.lrange(list1, 0, -1)).containsExactly("one", "two");
+        assertThat(redis.lrange(list2, 0, -1)).containsExactly("three");
     }
 
 }

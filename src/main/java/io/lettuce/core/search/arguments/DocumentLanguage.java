@@ -27,6 +27,21 @@ public enum DocumentLanguage {
      */
     ARMENIAN("armenian", new Locale("hy")),
     /**
+     * Basque
+     */
+    BASQUE("basque", new Locale("eu")),
+    /**
+     * Catalan
+     */
+    CATALAN("catalan", new Locale("ca")),
+    /**
+     * Chinese
+     *
+     * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/chinese/">Chinese
+     *      support</a>
+     */
+    CHINESE("chinese", Locale.CHINESE),
+    /**
      * Danish
      */
     DANISH("danish", new Locale("da")),
@@ -51,13 +66,41 @@ public enum DocumentLanguage {
      */
     GERMAN("german", Locale.GERMAN),
     /**
+     * Greek
+     */
+    GREEK("greek", new Locale("el")),
+    /**
+     * Hindi
+     */
+    HINDI("hindi", new Locale("hi")),
+    /**
      * Hungarian
      */
     HUNGARIAN("hungarian", new Locale("hu")),
     /**
+     * Indonesian
+     */
+    INDONESIAN("indonesian", new Locale("id")),
+    /**
+     * Irish
+     */
+    IRISH("irish", new Locale("ga")),
+    /**
      * Italian
      */
     ITALIAN("italian", Locale.ITALIAN),
+    /**
+     * Lithuanian
+     */
+    LITHUANIAN("lithuanian", new Locale("lt")),
+    /**
+     * Malay
+     */
+    MALAY("malay", new Locale("ms")),
+    /**
+     * Nepali
+     */
+    NEPALI("nepali", new Locale("ne")),
     /**
      * Norwegian
      */
@@ -87,6 +130,10 @@ public enum DocumentLanguage {
      */
     SWEDISH("swedish", new Locale("sv")),
     /**
+     * Tagalog
+     */
+    TAGALOG("tagalog", new Locale("tl")),
+    /**
      * Tamil
      */
     TAMIL("tamil", new Locale("ta")),
@@ -97,14 +144,7 @@ public enum DocumentLanguage {
     /**
      * Yiddish
      */
-    YIDDISH("yiddish", new Locale("yi")),
-    /**
-     * Chinese
-     * 
-     * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/chinese/">Chinese
-     *      support</a>
-     */
-    CHINESE("chinese", Locale.CHINESE);
+    YIDDISH("yiddish", new Locale("yi"));
 
     private final String language;
 

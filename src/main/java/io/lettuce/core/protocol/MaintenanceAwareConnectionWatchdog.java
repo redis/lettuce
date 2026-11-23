@@ -22,7 +22,6 @@ import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import reactor.core.publisher.Mono;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -34,8 +33,11 @@ import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 /**
  * An extension to {@link ConnectionWatchdog} that intercepts maintenance events.
@@ -76,12 +78,11 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
     private RebindAwareAddressSupplier rebindAwareAddressSupplier;
 
     public MaintenanceAwareConnectionWatchdog(Delay reconnectDelay, ClientOptions clientOptions, Bootstrap bootstrap,
-            Timer timer, EventExecutorGroup reconnectWorkers, Mono<SocketAddress> socketAddressSupplier,
-            ReconnectionListener reconnectionListener, ConnectionFacade connectionFacade, EventBus eventBus,
-            Endpoint endpoint) {
+            Timer timer, EventExecutorGroup reconnectWorkers, Supplier<CompletionStage<SocketAddress>> socketAddressSupplier,
+            ReconnectionListener reconnectionListener, EventBus eventBus, Endpoint endpoint) {
 
         super(reconnectDelay, clientOptions, bootstrap, timer, reconnectWorkers, socketAddressSupplier, reconnectionListener,
-                connectionFacade, eventBus, endpoint);
+                eventBus, endpoint);
     }
 
     @Override
@@ -111,8 +112,9 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
     }
 
     @Override
-    protected Mono<SocketAddress> wrapSocketAddressSupplier(Mono<SocketAddress> socketAddressSupplier) {
-        Mono<SocketAddress> source = super.wrapSocketAddressSupplier(socketAddressSupplier);
+    protected Supplier<CompletionStage<SocketAddress>> wrapSocketAddressSupplier(
+            Supplier<CompletionStage<SocketAddress>> socketAddressSupplier) {
+        Supplier<CompletionStage<SocketAddress>> source = super.wrapSocketAddressSupplier(socketAddressSupplier);
         rebindAwareAddressSupplier = new RebindAwareAddressSupplier();
         return rebindAwareAddressSupplier.wrappedSupplier(source);
     }
@@ -154,15 +156,26 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
         channel.attr(REBIND_ATTRIBUTE).set(RebindState.STARTED);
         rebindAwareAddressSupplier.rebind(movingEvent.getTime(), movingEvent.getEndpoint());
 
+        // Relax the timeouts for the whole re-bind window, not only while commands are still in flight. While the
+        // re-bind is in progress the endpoint reports itself as disconnected (see DefaultEndpoint#isConnected), so
+        // every command issued after the MOVING notification is buffered until the connection to the new endpoint has
+        // been established. Those commands need the relaxed timeout just as much as the ones already on the wire.
+        notifyRebindStarted(movingEvent.getTime(), movingEvent.getEndpoint());
+
         ChannelPipeline pipeline = channel.pipeline();
         CommandHandler commandHandler = pipeline.get(CommandHandler.class);
         if (commandHandler.getStack().isEmpty()) {
             logger.debug("[{}] Closing channel as part of rebind", ChannelLogDescriptor.logDescriptor(channel));
             channel.close().awaitUninterruptibly();
             channel.attr(REBIND_ATTRIBUTE).set(RebindState.COMPLETED);
-        } else {
-            notifyRebindStarted(movingEvent.getTime(), movingEvent.getEndpoint());
+
+            // The channel is closed already, so channelReadComplete() is not going to fire for it again and cannot
+            // report the completion. Report it here, which lifts the relaxed timeouts after the grace period.
+            notifyRebindCompleted();
         }
+
+        // Otherwise CommandHandler#decode flips the state to COMPLETED once the stack has been drained and
+        // channelReadComplete() closes the channel and reports the completion of the re-bind.
     }
 
     private String getMigratingShards(PushMessage message) {
@@ -405,22 +418,23 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
          * @param original the original supplier
          * @return a new supplier that is aware of re-bind events
          */
-        public Mono<SocketAddress> wrappedSupplier(Mono<SocketAddress> original) {
-            return Mono.defer(() -> {
+        public Supplier<CompletionStage<SocketAddress>> wrappedSupplier(Supplier<CompletionStage<SocketAddress>> original) {
+            return () -> {
                 State current = state.get();
-                logger.debug("RebindAwareAddressSupplier rebind state: {}", state.get());
+                logger.debug("RebindAwareAddressSupplier rebind state: {}", current);
                 if (current != null && current.rebindAddress != null && clock.instant().isBefore(current.cutoff)) {
-                    logger.debug("RebindAwareAddressSupplier using rebind address: {}", state.get());
-                    return Mono.just(current.rebindAddress)
-                            .doOnSubscribe(s -> logger.debug("RebindAwareAddressSupplier subscribed to rebind address"))
-                            .doOnNext(address -> logger.debug("RebindAwareAddressSupplier rebind address: {}", address));
+                    logger.debug("RebindAwareAddressSupplier using rebind address: {}", current);
+                    logger.debug("RebindAwareAddressSupplier rebind address: {}", current.rebindAddress);
+                    return CompletableFuture.completedFuture(current.rebindAddress);
                 } else {
                     logger.debug("RebindAwareAddressSupplier falling back to original.");
                     state.compareAndSet(current, null);
-                    return original.doOnSubscribe(s -> logger.debug("RebindAwareAddressSupplier original to rebind address"))
-                            .doOnNext(address -> logger.debug("RebindAwareAddressSupplier original address: {}", address));
+                    return original.get().thenApply(address -> {
+                        logger.debug("RebindAwareAddressSupplier original address: {}", address);
+                        return address;
+                    });
                 }
-            });
+            };
         }
 
     }

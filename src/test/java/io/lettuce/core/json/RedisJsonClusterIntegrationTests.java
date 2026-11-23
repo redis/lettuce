@@ -16,7 +16,9 @@ import io.lettuce.core.json.arguments.JsonGetArgs;
 import io.lettuce.core.json.arguments.JsonMsetArgs;
 import io.lettuce.core.json.arguments.JsonRangeArgs;
 import io.lettuce.core.json.arguments.JsonSetArgs;
+import io.lettuce.test.settings.TestSettings;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -44,8 +46,9 @@ public class RedisJsonClusterIntegrationTests {
 
     protected static RedisAdvancedClusterCommands<String, String> redis;
 
-    public RedisJsonClusterIntegrationTests() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(36379).build();
+    @BeforeAll
+    static void setup() {
+        RedisURI redisURI = RedisURI.Builder.redis(TestSettings.host()).withPort(TestSettings.moduleClusterPort()).build();
 
         client = RedisClusterClient.create(redisURI);
         redis = client.connect().sync();
@@ -98,7 +101,7 @@ public class RedisJsonClusterIntegrationTests {
         JsonPath myPath = JsonPath.of(path);
         JsonValue element = parser.createJsonValue("\"white\"");
 
-        List<Long> arrayIndex = redis.jsonArrindex(BIKES_INVENTORY, myPath, element, null);
+        List<Long> arrayIndex = redis.jsonArrindex(BIKES_INVENTORY, myPath, element, JsonRangeArgs.Builder.defaults());
         assertThat(arrayIndex).isNotNull();
         assertThat(arrayIndex).hasSize(1);
         assertThat(arrayIndex.get(0).longValue()).isEqualTo(1L);

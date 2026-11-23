@@ -32,6 +32,7 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Tihomir Mateev
+ * @author Yordan Tsintsov
  * @since 6.5
  */
 @ExperimentalLettuceCoroutinesApi
@@ -55,8 +56,14 @@ open class RedisCoroutinesCommandsImpl<K : Any, V : Any>(
     RedisTransactionalCoroutinesCommands<K, V> by RedisTransactionalCoroutinesCommandsImpl(ops),
     RedisJsonCoroutinesCommands<K, V> by RedisJsonCoroutinesCommandsImpl(ops),
     RedisVectorSetCoroutinesCommands<K, V> by RedisVectorSetCoroutinesCommandsImpl(ops),
-    RediSearchCoroutinesCommands<K, V> by RediSearchCoroutinesCommandsImpl(ops){
-
+    RediSearchCoroutinesCommands<K> by RediSearchCoroutinesCommandsImpl(ops),
+    RedisArrayCoroutinesCommands<K, V> by RedisArrayCoroutinesCommandsImpl(ops),
+    RedisBloomFilterCoroutinesCommands<K, V> by RedisBloomFilterCoroutinesCommandsImpl(ops),
+    RedisCuckooFilterCoroutinesCommands<K, V> by RedisCuckooFilterCoroutinesCommandsImpl(ops),
+    RedisTopKCoroutinesCommands<K, V> by RedisTopKCoroutinesCommandsImpl(ops),
+    RedisCMSCoroutinesCommands<K, V> by RedisCMSCoroutinesCommandsImpl(ops),
+    RedisTDigestCoroutinesCommands<K, V> by RedisTDigestCoroutinesCommandsImpl(ops),
+    RedisTimeSeriesCoroutinesCommands<K> by RedisTimeSeriesCoroutinesCommandsImpl(ops) {
 
     /**
      * Authenticate to the server.

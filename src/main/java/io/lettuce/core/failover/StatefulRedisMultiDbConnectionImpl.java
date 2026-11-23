@@ -29,7 +29,7 @@ import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.RedisReactiveCommandsImpl;
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.annotations.Experimental;
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
@@ -51,6 +51,7 @@ import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.internal.AbstractInvocationHandler;
 import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.internal.Store;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.internal.logging.InternalLogger;
@@ -64,7 +65,6 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Ali Takavci
  * @since 7.4
  */
-@Experimental
 class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>, K, V>
         implements StatefulRedisMultiDbConnection<K, V> {
 
@@ -81,9 +81,9 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     protected final RedisAsyncCommandsImpl<K, V> async;
 
-    protected final RedisReactiveCommandsImpl<K, V> reactive;
-
     protected final RedisCodec<K, V> codec;
+
+    protected final Store store = new Store();
 
     protected final Set<PushListener> pushListeners = ConcurrentHashMap.newKeySet();
 
@@ -194,7 +194,6 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
         this.async = newRedisAsyncCommandsImpl();
         this.sync = newRedisSyncCommandsImpl();
-        this.reactive = newRedisReactiveCommandsImpl();
         this.completion = completion;
         if (completion != null) {
             completion.whenComplete(this::onDatabaseCompletion);
@@ -463,25 +462,6 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     }
 
     /**
-     * Returns the reactive API. The API is a dynamic proxy that remains valid across database switches.
-     *
-     * @return the reactive commands API.
-     */
-    @Override
-    public RedisReactiveCommands<K, V> reactive() {
-        return reactive;
-    }
-
-    /**
-     * Create a new instance of {@link RedisReactiveCommandsImpl}. Can be overridden to extend.
-     *
-     * @return a new instance
-     */
-    protected RedisReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
-        return new RedisReactiveCommandsImpl<>(this, codec, () -> this.getOptions().getJsonParser().get());
-    }
-
-    /**
      * Returns the synchronous API. The API is a dynamic proxy that remains valid across database switches.
      *
      * @return the synchronous commands API.
@@ -713,6 +693,11 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     @Override
     public RedisCodec<K, V> getCodec() {
         return codec;
+    }
+
+    @Override
+    public <T> T commands(CommandsFactory<StatefulRedisConnection<K, V>, T> f) {
+        return store.compute(f.key(), () -> f.apply(this));
     }
 
     /**

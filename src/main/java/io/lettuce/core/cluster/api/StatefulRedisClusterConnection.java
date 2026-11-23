@@ -24,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.ClusterClientOptions;
@@ -47,6 +48,9 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
 
     /**
      * Returns the {@link RedisAdvancedClusterCommands} API for the current connection. Does not create a new connection.
+     * <p>
+     * Note: this accessor is scheduled for removal in a future major release; a {@code commands(...)}-based replacement is
+     * planned.
      *
      * @return the synchronous API for the underlying connection.
      */
@@ -54,6 +58,9 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
 
     /**
      * Returns the {@link RedisAdvancedClusterAsyncCommands} API for the current connection. Does not create a new connection.
+     * <p>
+     * Note: this accessor is scheduled for removal in a future major release; a {@code commands(...)}-based replacement is
+     * planned.
      *
      * @return the asynchronous API for the underlying connection.
      */
@@ -64,8 +71,13 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      * connection.
      *
      * @return the reactive API for the underlying connection.
+     * @deprecated since 7.8, use {@link #commands(CommandsFactory)} with {@link RedisAdvancedClusterReactiveCommands#factory()}
+     *             instead; scheduled for removal in a future major release.
      */
-    RedisAdvancedClusterReactiveCommands<K, V> reactive();
+    @Deprecated
+    default RedisAdvancedClusterReactiveCommands<K, V> reactive() {
+        return commands(RedisAdvancedClusterReactiveCommands.factory());
+    }
 
     /**
      * Retrieve a connection to the specified cluster node using the {@code nodeId} suitable for {@link ConnectionIntent#WRITE
@@ -284,5 +296,18 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      * @since 6.0
      */
     void removeListener(RedisClusterPushListener listener);
+
+    /**
+     * Returns the command API created by {@code factory}, bound to this connection. Does not create a new connection.
+     * <p>
+     * The command API is created once per connection and cached; calling this method again with the same {@code factory}
+     * returns the same instance.
+     *
+     * @param factory the command API factory, must not be {@code null}
+     * @param <T> the command API type
+     * @return the command API bound to this connection
+     * @since 7.8
+     */
+    <T> T commands(CommandsFactory<StatefulRedisClusterConnection<K, V>, T> factory);
 
 }

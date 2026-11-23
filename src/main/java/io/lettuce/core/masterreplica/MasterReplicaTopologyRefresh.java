@@ -5,7 +5,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
 
-import reactor.core.publisher.Mono;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
@@ -53,25 +52,31 @@ class MasterReplicaTopologyRefresh {
      * @param seed collection of {@link RedisURI}s
      * @return mapping between {@link RedisURI} and {@link Partitions}
      */
-    public Mono<List<RedisNodeDescription>> getNodes(RedisURI seed) {
+    public CompletionStage<List<RedisNodeDescription>> getNodesAsync(RedisURI seed) {
 
         CompletableFuture<List<RedisNodeDescription>> future = topologyProvider.getNodesAsync();
 
-        Mono<List<RedisNodeDescription>> initialNodes = Mono.fromFuture(future).doOnNext(nodes -> {
-            applyAuthenticationCredentials(nodes, seed);
+        CompletableFuture<List<RedisNodeDescription>> initialNodes = future.thenApply(nodeList -> {
+            applyAuthenticationCredentials(nodeList, seed);
+            return nodeList;
         });
 
-        return initialNodes.map(this::getConnections)
-                .flatMap(asyncConnections -> asyncConnections.asMono(seed.getTimeout(), eventExecutors))
-                .flatMap(connections -> {
+        return initialNodes.thenApply(this::getConnections).thenCompose(asyncConnections -> {
+            return asyncConnections.asAsync(seed.getTimeout(), eventExecutors);
+        }).thenCompose(connections -> {
 
-                    Requests requests = connections.requestPing();
+            Requests requests = connections.requestPing();
 
-                    CompletionStage<List<RedisNodeDescription>> nodes = requests.getOrTimeout(seed.getTimeout(),
-                            eventExecutors);
+            CompletionStage<List<RedisNodeDescription>> nodes = requests.getOrTimeout(seed.getTimeout(), eventExecutors);
+            return nodes.whenComplete((nodeList, err) -> closeSilently(connections));
+        });
+    }
 
-                    return Mono.fromCompletionStage(nodes).flatMap(it -> ResumeAfter.close(connections).thenEmit(it));
-                });
+    private void closeSilently(Connections connections) {
+        connections.closeAsync().exceptionally(ex -> {
+            logger.warn("Failed to close nodes connections", ex);
+            return null;
+        });
     }
 
     /*

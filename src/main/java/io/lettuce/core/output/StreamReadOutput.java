@@ -38,6 +38,8 @@ public class StreamReadOutput<K, V> extends CommandOutput<K, V, List<StreamMessa
 
     private boolean bodyReceived = false;
 
+    private int entryEmitDepth = -1;
+
     public StreamReadOutput(RedisCodec<K, V> codec) {
         super(codec, Collections.emptyList());
         setSubscriber(ListSubscriber.instance());
@@ -114,7 +116,10 @@ public class StreamReadOutput<K, V> extends CommandOutput<K, V, List<StreamMessa
     public void complete(int depth) {
 
         // Emit the message when the entry array (id/body[/extras]) completes.
-        if (depth == 2 && bodyReceived) {
+        // entryEmitDepth is resolved dynamically because RESP2 and RESP3 differ by one nesting level:
+        // RESP2 wraps results in an outer *N array so the stream key fires complete(2) and entries fire complete(3).
+        // RESP3 uses a top-level map so the stream key fires complete(1) and entries fire complete(2).
+        if (entryEmitDepth >= 0 && depth == entryEmitDepth && bodyReceived) {
             Map<K, V> map = body == null ? Collections.emptyMap() : body;
             if (msSinceLastDelivery != null && redeliveryCount != null) {
                 subscriber.onNext(output, new StreamMessage<>(stream, id, map, msSinceLastDelivery, redeliveryCount));
@@ -129,14 +134,18 @@ public class StreamReadOutput<K, V> extends CommandOutput<K, V, List<StreamMessa
             redeliveryCount = null;
         }
 
-        // RESP2/RESP3 compat
+        // Resolve entry emit depth from stream key depth (entryEmitDepth = streamKeyDepth + 1).
+        // RESP2: stream key fires complete(2), so entries fire complete(3).
+        // RESP3: stream key fires complete(1), so entries fire complete(2).
         if (depth == 2 && skipStreamKeyReset) {
             skipStreamKeyReset = false;
+            entryEmitDepth = depth + 1;
         }
 
         if (depth == 1) {
             if (skipStreamKeyReset) {
                 skipStreamKeyReset = false;
+                entryEmitDepth = depth + 1;
             } else {
                 stream = null;
             }

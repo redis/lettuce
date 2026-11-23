@@ -6,8 +6,10 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.TestTags;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -26,10 +28,11 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 
 /**
  * Test to reproduce Netty 4.2 compatibility issues between application event loops and Lettuce's internal event loops.
- * 
+ *
  * This test simulates a real-world scenario where an application (e.g., a Netty server) uses Netty event loops and also uses
  * Lettuce to connect to Redis.
  */
+@Tag(TestTags.INTEGRATION_TEST)
 class Netty42CompatibilityTest {
 
     private static final String host = TestSettings.host();
