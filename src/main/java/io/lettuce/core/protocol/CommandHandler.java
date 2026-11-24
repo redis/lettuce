@@ -243,8 +243,10 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
         channel = null;
 
-        if (readBuffer != null) {
-            readBuffer.release();
+        ByteBuf buf = readBuffer;
+        readBuffer = null;
+        if (buf != null) {
+            buf.release();
         }
 
         if (rsm != null) {
@@ -606,7 +608,12 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             }
 
             readBuffer.touch("CommandHandler.read(…)");
-            readBuffer.writeBytes(input);
+            try {
+                readBuffer.writeBytes(input);
+            } catch (Throwable e) {
+                ctx.close();
+                throw e;
+            }
 
             decode(ctx, readBuffer);
         } finally {
