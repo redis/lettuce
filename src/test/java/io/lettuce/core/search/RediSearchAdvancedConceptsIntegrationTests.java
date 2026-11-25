@@ -779,16 +779,16 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("nostem:3", "content_exact", "runner speed");
         redis.hset("nostem:4", "content_exact", "run now");
 
-        // Search for "run" should only find exact matches. Poll the first search against the
-        // freshly-populated index to absorb the indexing lag.
+        // Search for "run" should only find exact matches. Each document is written with its own HSET, so a satisfied
+        // search does not mean the other documents are indexed yet: poll every search to absorb the indexing lag.
         Wait.untilEquals(1L, () -> redis.ftSearch("nostemming-idx", "@content_exact:run").getCount()).waitOrTimeout();
 
         // Search for "running" should only find exact matches
-        SearchReply<String> results = redis.ftSearch("nostemming-idx", "@content_exact:running");
+        SearchReply<String> results = SearchTestSupport.searchUntilCount(redis, "nostemming-idx", "@content_exact:running", 1);
         assertThat(results.getCount()).isEqualTo(1); // Only "running quickly"
 
         // Search for "runs" should only find exact matches
-        results = redis.ftSearch("nostemming-idx", "@content_exact:runs");
+        results = SearchTestSupport.searchUntilCount(redis, "nostemming-idx", "@content_exact:runs", 1);
         assertThat(results.getCount()).isEqualTo(1); // Only "runs fast"
 
         redis.ftDropindex("nostemming-idx");

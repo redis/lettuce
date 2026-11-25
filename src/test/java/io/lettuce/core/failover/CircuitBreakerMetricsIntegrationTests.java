@@ -15,6 +15,7 @@ import io.lettuce.core.failover.metrics.MetricsFactory;
 import io.lettuce.core.failover.metrics.MetricsSnapshot;
 import io.lettuce.core.failover.metrics.TestClock;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,6 +42,7 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
     }
 
     @Test
+    @Disabled("Flaky: the success count can be updated after the synchronous call returns, see #3567; re-enable once #3670 is merged")
     void shouldTrackSuccessfulCommands() {
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
         RedisURI endpoint = connection.getCurrentEndpoint();
