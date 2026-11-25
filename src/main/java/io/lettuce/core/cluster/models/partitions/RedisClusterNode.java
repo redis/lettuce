@@ -309,7 +309,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      * {@link List}.
      *
      * @return the number of assigned slots, {@code 0} if no slots are assigned.
-     * @since 7.8
+     * @since 8.0
      */
     public int getSlotCount() {
 
