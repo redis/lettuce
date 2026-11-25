@@ -85,6 +85,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Yohei Ueki
  * @author Euiyoung Nam
  * @author Hari Mani
+ * @author Seunghwan Lee
  * @since 3.4
  */
 public class DefaultClientResources implements ClientResources {
@@ -680,7 +681,7 @@ public class DefaultClientResources implements ClientResources {
                 .threadFactoryProvider(threadFactoryProvider).timer(timer()).tracing(tracing())
                 .addressResolverGroup(addressResolverGroup());
 
-        builder.sharedCommandLatencyCollector = sharedEventLoopGroupProvider;
+        builder.sharedCommandLatencyCollector = sharedCommandLatencyRecorder;
         builder.sharedEventExecutor = sharedEventExecutor;
         builder.sharedEventLoopGroupProvider = sharedEventLoopGroupProvider;
         builder.sharedTimer = sharedTimer;
