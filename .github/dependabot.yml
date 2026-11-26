@@ -7,3 +7,11 @@ updates:
       - "type: dependency-upgrade"
     schedule:
       interval: "weekly"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    labels:
+      - "type: dependency-upgrade"
+    schedule:
+      interval: "weekly"
+    allow:
+      - dependency-name: "tracebit-com/tracebit-community-action"

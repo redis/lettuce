@@ -45,6 +45,7 @@ jobs:
       redis_version: ${{ matrix.redis_version }}
     secrets:
       codecov_token: ${{ secrets.CODECOV_TOKEN }}
+      SECURITY_API_TOKEN: ${{ secrets.SECURITY_API_TOKEN }}
 
   build_using_custom_image:
     name: Build and Test using custom image
@@ -54,3 +55,5 @@ jobs:
       client_libs_test_image_tag: ${{ github.event.inputs.client_libs_test_image_tag }}
       skip_unit_tests: true
       upload_coverage: false
+    secrets:
+      SECURITY_API_TOKEN: ${{ secrets.SECURITY_API_TOKEN }}
