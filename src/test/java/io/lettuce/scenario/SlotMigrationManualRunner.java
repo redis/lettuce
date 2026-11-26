@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
@@ -194,6 +195,9 @@ public class SlotMigrationManualRunner {
     private volatile double smigratingAt = -1;
 
     private volatile double smigratedAt = -1;
+
+    // first slot named by SMIGRATING, or -1
+    private volatile int watchedSlot = -1;
 
     private int connectionCount;
 
@@ -804,6 +808,11 @@ public class SlotMigrationManualRunner {
         // seconds since start of the first topology change after SMIGRATING, or -1
         private volatile double topologyChangedAt = -1;
 
+        // seconds since start when the first migrating slot was routed to another node, or -1
+        private volatile double routingSwitchedAt = -1;
+
+        private final LongAdder refreshes = new LongAdder();
+
         private final Map<Phase, Map<Counter, LongAdder>> events = counters(Counter.class);
 
         // node -> phase -> probe result
@@ -850,7 +859,7 @@ public class SlotMigrationManualRunner {
             builder.timeoutOptions(
                     TimeoutOptions.builder().fixedTimeout(timeout).relaxedTimeoutsDuringMaintenance(relaxed).build());
 
-            client = new TracedClusterClient(uri, name);
+            client = new TracedClusterClient(uri, name, refreshes::increment);
             client.setOptions(builder.build());
             eventSubscription = client.getResources().eventBus().subscribe(this::onEvent);
 
@@ -864,6 +873,7 @@ public class SlotMigrationManualRunner {
 
             StatefulRedisClusterConnection<String, String> asyncConnection = connect();
             threads.add(startThread(name + "-async-workload", () -> asyncWorkload(asyncConnection)));
+            threads.add(startThread(name + "-routing-watch", this::watchRouting));
         }
 
         private StatefulRedisClusterConnection<String, String> connect() {
@@ -1029,6 +1039,39 @@ public class SlotMigrationManualRunner {
             }
         }
 
+        /**
+         * Reports when this client starts routing the first migrating slot to another node.
+         */
+        private void watchRouting() {
+
+            String owner = null;
+
+            while (running.get()) {
+
+                int slot = watchedSlot;
+                RedisClusterNode master = slot < 0 ? null : client.getPartitions().getMasterBySlot(slot);
+                String current = master == null ? null : describe(master);
+
+                if (owner != null && current != null && !owner.equals(current)) {
+                    emit(traceEvent("client").put("client", name).put("name", "routing-switched").put("detail",
+                            "slot " + slot + ": " + owner + " -> " + current));
+                    if (routingSwitchedAt < 0) {
+                        routingSwitchedAt = seconds();
+                    }
+                }
+                if (current != null) {
+                    owner = current;
+                }
+
+                // the switch can be seen before this client's SMIGRATED handler has moved the phase
+                if (phaseDriver && routingSwitchedAt >= 0) {
+                    transition(Phase.AFTER, name + " routing switched", Phase.REFRESHING);
+                }
+
+                sleep(5);
+            }
+        }
+
         // ---- collectors -------------------------------------------------------------------------------------------
 
         private void onPush(RedisClusterNode node, PushMessage message) {
@@ -1053,6 +1096,12 @@ public class SlotMigrationManualRunner {
             }
 
             if ("SMIGRATING".equals(type)) {
+                int[] bounds = content.size() > 2 && content.get(2) instanceof ByteBuffer
+                        ? slotBounds(StringCodec.UTF8.decodeKey(((ByteBuffer) content.get(2)).duplicate()))
+                        : new int[0];
+                if (bounds.length > 0) {
+                    watchedSlot = bounds[0];
+                }
                 if (smigratingAt < 0) {
                     smigratingAt = seconds();
                 }
@@ -1596,18 +1645,37 @@ public class SlotMigrationManualRunner {
 
         private final String name;
 
-        TracedClusterClient(RedisURI uri, String name) {
+        private final Runnable onRefresh;
+
+        /**
+         * @param onRefresh called for every refresh started after {@code SMIGRATED}
+         */
+        TracedClusterClient(RedisURI uri, String name, Runnable onRefresh) {
             super(null, Collections.singleton(uri));
             this.name = name;
+            this.onRefresh = onRefresh;
+        }
+
+        @Override
+        protected CompletionStage<Void> refreshPartitionsAsync(Collection<RedisURI> seeds) {
+            emit(traceEvent("client").put("client", name).put("name", "seeded-refresh").put("detail", seeds.toString()));
+            return traced(super.refreshPartitionsAsync(seeds), System.nanoTime(), "seeds");
         }
 
         @Override
         public CompletionStage<Void> refreshPartitionsAsync() {
+            return traced(super.refreshPartitionsAsync(), System.nanoTime(), "regular");
+        }
 
-            long started = System.nanoTime();
-            emit(traceEvent("refresh").put("client", name).put("name", "started"));
+        private CompletionStage<Void> traced(CompletionStage<Void> refresh, long started, String sources) {
 
-            return super.refreshPartitionsAsync().whenComplete((ignore, error) -> {
+            if (smigratedAt >= 0) {
+                onRefresh.run();
+            }
+
+            emit(traceEvent("refresh").put("client", name).put("name", "started").put("sources", sources));
+
+            return refresh.whenComplete((ignore, error) -> {
                 ObjectNode node = traceEvent("refresh").put("client", name).put("name", error == null ? "completed" : "failed")
                         .put("ms", (System.nanoTime() - started) / 1_000_000);
                 if (error != null) {
@@ -1792,6 +1860,13 @@ public class SlotMigrationManualRunner {
         compare("Probe completed (all phases)", clients, c -> c.probe(Probe.COMPLETED, all));
         boolean[] moved = movedSlots();
 
+        StringBuilder routing = new StringBuilder(String.format("  %-46s", "Seconds from SMIGRATED to routing switch"));
+        for (ClientRun client : clients) {
+            routing.append(client.routingSwitchedAt < 0 || smigratedAt < 0 ? String.format(" %14s", "-")
+                    : String.format(" %14.3f", client.routingSwitchedAt - smigratedAt));
+        }
+        out.println(routing);
+
         StringBuilder refresh = new StringBuilder(String.format("  %-46s", "Seconds from SMIGRATED to topology change"));
         for (ClientRun client : clients) {
             refresh.append(client.topologyChangedAt < 0 || smigratedAt < 0 ? String.format(" %14s", "-")
@@ -1867,12 +1942,14 @@ public class SlotMigrationManualRunner {
         check("Relaxation: SCH-ON blocking probe completes during the migration", migrated ? relaxedProbes > 0 : null,
                 "completed=" + relaxedProbes + ", timed out=" + on.probe(Probe.TIMED_OUT, Phase.MIGRATING, Phase.REFRESHING));
 
-        long onChanges = on.event(Counter.TOPOLOGY_CHANGED, all);
-        check("Refresh: SCH-ON topology changed after SMIGRATED", migrated ? onChanges > 0 : null, "changes=" + onChanges);
+        check("Routing: SCH-ON switched the migrated slots after SMIGRATED",
+                migrated ? on.routingSwitchedAt >= 0 && on.routingSwitchedAt - smigratedAt < 0.1 : null,
+                on.routingSwitchedAt < 0 ? "never"
+                        : String.format("%.3f s after SMIGRATED", on.routingSwitchedAt - smigratedAt));
 
-        check("Refresh: SCH-ON at most one topology change per SMIGRATED sequence id",
-                migrated ? onChanges <= on.distinctPushes("SMIGRATED") : null,
-                "changes=" + onChanges + ", sequence ids=" + on.distinctPushes("SMIGRATED"));
+        // SCH-ON has no adaptive or periodic refresh: with a known destination the slots are moved in place
+        check("In place: SCH-ON ran no topology refresh after SMIGRATED", migrated ? on.refreshes.sum() == 0 : null,
+                "refreshes=" + on.refreshes.sum());
 
         StringBuilder wrong = new StringBuilder();
         int checkedSlots = 0;
@@ -1886,7 +1963,7 @@ public class SlotMigrationManualRunner {
                 }
             }
         }
-        check("Refresh: SCH-ON routes the migrated slots to the SMIGRATED destination",
+        check("Routing: SCH-ON routes the migrated slots to the SMIGRATED destination",
                 refreshed && checkedSlots > 0 ? wrong.length() == 0 : null,
                 "slots checked=" + checkedSlots + (wrong.length() == 0 ? "" : "," + abbreviate(wrong.toString(), 200)));
 
