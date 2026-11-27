@@ -368,21 +368,23 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         setState(LifecycleState.DISCONNECTED);
         setState(LifecycleState.DEACTIVATING);
 
-        endpoint.notifyChannelInactive(ctx.channel());
-        endpoint.notifyDrainQueuedCommands(this);
+        try {
+            endpoint.notifyChannelInactive(ctx.channel());
+            endpoint.notifyDrainQueuedCommands(this);
+        } finally {
+            setState(LifecycleState.DEACTIVATED);
 
-        setState(LifecycleState.DEACTIVATED);
+            PristineFallbackCommand command = this.fallbackCommand;
+            if (isProtectedMode(command)) {
+                onProtectedMode(command.getOutput().getError());
+            }
 
-        PristineFallbackCommand command = this.fallbackCommand;
-        if (isProtectedMode(command)) {
-            onProtectedMode(command.getOutput().getError());
+            if (debugEnabled) {
+                logger.debug("{} channelInactive() done", logPrefix());
+            }
+
+            super.channelInactive(ctx);
         }
-
-        if (debugEnabled) {
-            logger.debug("{} channelInactive() done", logPrefix());
-        }
-
-        super.channelInactive(ctx);
     }
 
     /**
