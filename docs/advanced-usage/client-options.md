@@ -6,6 +6,16 @@ ClientOptions are immutable. Connections inherit the current options at
 the moment the connection is created. Changes to options will not affect
 existing connections.
 
+A connection reads the options once, when its endpoint is created, and uses
+that instance for the rest of its initialization. Calling `setOptions` while a
+connection is being set up only affects connections created afterwards. Every
+connection takes its own options, including the node connections a Redis
+Cluster connection opens later on and the Sentinel connections used to look up
+the master address. Subclasses that override `RedisClient.createEndpoint()` or
+`createPubSubEndpoint()` determine the options of the connection through the
+`ClientOptions` passed to the endpoint; `DefaultEndpoint.getClientOptions()`
+returns them.
+
 ``` java
 client.setOptions(ClientOptions.builder()
                        .autoReconnect(false)

@@ -162,6 +162,16 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         return clientResources;
     }
 
+    /**
+     * Returns the {@link ClientOptions} this endpoint was created with.
+     *
+     * @return the {@link ClientOptions} of this endpoint, never {@code null}.
+     * @since 8.0
+     */
+    public ClientOptions getClientOptions() {
+        return clientOptions;
+    }
+
     @Override
     public void setAutoFlushCommands(boolean autoFlush) {
         this.autoFlushCommands = autoFlush;
