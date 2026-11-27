@@ -64,6 +64,7 @@ Lettuce 8.0 removes the Reactor-based APIs deprecated in 7.8 and 7.9, and change
   - `jsonArrtrim(key, path, JsonRangeArgs)` is deprecated in favor of `jsonArrtrim(key, path, start, stop)`. `JsonRangeArgs` leaves out an index of `0`, so it can't express ranges such as `0 0`, which the server requires both indexes for.
   - `JsonPath.equals` now compares two `JsonPath` instances. Before, it compared the path against the other object, so `JsonPath.of("$").equals("$")` was `true` and two equal paths were not equal.
   - `RedisJsonCommands` and its other flavors gain `jsonArrtrim(K, JsonPath, int, int)`, so custom implementations of these interfaces must implement it.
+- **Kotlin:** the Kotlin coroutines API now needs Kotlin 2.2 or later, both for the compiler and for `kotlin-stdlib` at runtime. Before, it worked with Kotlin 1.4 and later. Lettuce is now built with Kotlin 2.4 and tested with `kotlinx-coroutines` 1.11. Applications that use only the Java APIs are not affected.
 
 ## What's new in Lettuce 7.9
 
