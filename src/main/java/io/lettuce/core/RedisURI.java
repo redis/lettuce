@@ -34,15 +34,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.LongFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import io.lettuce.core.internal.Exceptions;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.core.internal.LettuceStrings;
-import reactor.core.publisher.Mono;
 
 /**
  * Redis URI. Contains connection details for the Redis/Sentinel connections. You can provide the database, client name,
@@ -158,6 +160,7 @@ import reactor.core.publisher.Mono;
  * @author Jacob Halsey
  * @author Tihomir Mateev
  * @author Kim Sung Hyun
+ * @author PreAgile
  * @since 3.0
  */
 public class RedisURI implements Serializable, ConnectionPoint {
@@ -241,7 +244,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     private String libraryVersion = LettuceVersion.getVersion();
 
-    private RedisCredentialsProvider credentialsProvider = new StaticCredentialsProvider(null, null);
+    private CredentialsProvider credentialsProvider = new StaticCredentialsProvider(null, null);
 
     private boolean ssl = false;
 
@@ -275,6 +278,30 @@ public class RedisURI implements Serializable, ConnectionPoint {
         setHost(host);
         setPort(port);
         setTimeout(timeout);
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source {@link RedisURI} to copy from.
+     */
+    protected RedisURI(RedisURI source) {
+        this.host = source.host;
+        this.socket = source.socket;
+        this.sentinelMasterId = source.sentinelMasterId;
+        this.port = source.port;
+        this.database = source.database;
+        this.clientName = source.clientName;
+        this.driverInfo = source.driverInfo;
+        this.libraryVersion = source.libraryVersion;
+        this.credentialsProvider = source.credentialsProvider;
+        this.ssl = source.ssl;
+        this.verifyMode = source.verifyMode;
+        this.startTls = source.startTls;
+        this.timeout = source.timeout;
+        for (RedisURI sentinel : source.sentinels) {
+            this.sentinels.add(new RedisURI(sentinel));
+        }
     }
 
     /**
@@ -445,7 +472,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         LettuceAssert.notNull(source, "Source RedisURI must not be null");
 
         if (source.credentialsProvider != null) {
-            setCredentialsProvider(source.getCredentialsProvider());
+            setCredentialsProvider(source.getCredentialsProviderAsync());
         }
     }
 
@@ -456,7 +483,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * username and the provided password.
      *
      * @param password the password to use to authenticate Redis connections.
-     * @see #setCredentialsProvider(RedisCredentialsProvider)
+     * @see #setCredentialsProvider(CredentialsProvider)
      * @since 7.0
      */
     public void setAuthentication(CharSequence password) {
@@ -472,7 +499,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * username and the provided password.
      *
      * @param password the password to use to authenticate Redis connections.
-     * @see #setCredentialsProvider(RedisCredentialsProvider)
+     * @see #setCredentialsProvider(CredentialsProvider)
      * @since 7.0
      */
     public void setAuthentication(char[] password) {
@@ -489,13 +516,13 @@ public class RedisURI implements Serializable, ConnectionPoint {
      *
      * @param username the username to use to authenticate Redis connections.
      * @param password the password to use to authenticate Redis connections.
-     * @see #setCredentialsProvider(RedisCredentialsProvider)
+     * @see #setCredentialsProvider(CredentialsProvider)
      * @since 7.0
      */
     public void setAuthentication(String username, char[] password) {
         LettuceAssert.notNull(password, "Password must not be null");
 
-        this.setCredentialsProvider(() -> Mono.just(RedisCredentials.just(username, password)));
+        this.setCredentialsProvider(() -> CompletableFuture.completedFuture(RedisCredentials.just(username, password)));
     }
 
     /**
@@ -506,13 +533,13 @@ public class RedisURI implements Serializable, ConnectionPoint {
      *
      * @param username the username to use to authenticate Redis connections.
      * @param password the password to use to authenticate Redis connections.
-     * @see #setCredentialsProvider(RedisCredentialsProvider)
+     * @see #setCredentialsProvider(CredentialsProvider)
      * @since 7.0
      */
     public void setAuthentication(String username, CharSequence password) {
         LettuceAssert.notNull(password, "Password must not be null");
 
-        this.setCredentialsProvider(() -> Mono.just(RedisCredentials.just(username, password)));
+        this.setCredentialsProvider(() -> CompletableFuture.completedFuture(RedisCredentials.just(username, password)));
     }
 
     /**
@@ -521,8 +548,26 @@ public class RedisURI implements Serializable, ConnectionPoint {
      *
      * @return the {@link RedisCredentialsProvider} to use to authenticate Redis connections
      * @since 6.2
+     * @deprecated since 7.9, use {@link #getCredentialsProviderAsync()} instead; scheduled for removal in a future major
+     *             release.
      */
+    @Deprecated
     public RedisCredentialsProvider getCredentialsProvider() {
+        if (this.credentialsProvider instanceof RedisCredentialsProvider) {
+            return (RedisCredentialsProvider) this.credentialsProvider;
+        }
+        return AsyncCredentialsProviderAdapter.of(this.credentialsProvider);
+    }
+
+    /**
+     * Returns the reactor-free {@link CredentialsProvider} configured on this URI. In contrast to
+     * {@link #getCredentialsProvider()}, the provider is returned as-is without adapting it to the deprecated reactive
+     * {@link RedisCredentialsProvider}; this is the accessor used on the driver's reactor-free authentication path.
+     *
+     * @return the {@link CredentialsProvider} to use to authenticate Redis connections.
+     * @since 7.9
+     */
+    public CredentialsProvider getCredentialsProviderAsync() {
         return this.credentialsProvider;
     }
 
@@ -532,10 +577,28 @@ public class RedisURI implements Serializable, ConnectionPoint {
      *
      * @param credentialsProvider the credentials provider to use when authenticating a Redis connection.
      * @since 6.2
+     * @deprecated since 7.9, use {@link #setCredentialsProvider(CredentialsProvider)} instead; scheduled for removal in a
+     *             future major release.
      */
+    @Deprecated
     public void setCredentialsProvider(RedisCredentialsProvider credentialsProvider) {
 
         LettuceAssert.notNull(credentialsProvider, "RedisCredentialsProvider must not be null");
+
+        this.credentialsProvider = credentialsProvider;
+    }
+
+    /**
+     * Sets the {@link CredentialsProvider}. Configuring a credentials provider resets the configured static username/password.
+     * This is the reactor-free replacement for {@link #setCredentialsProvider(RedisCredentialsProvider)};
+     * {@link #getCredentialsProvider()} keeps returning a {@link RedisCredentialsProvider} view for backward compatibility.
+     *
+     * @param credentialsProvider the credentials provider to use when authenticating a Redis connection.
+     * @since 7.9
+     */
+    public void setCredentialsProvider(CredentialsProvider credentialsProvider) {
+
+        LettuceAssert.notNull(credentialsProvider, "CredentialsProvider must not be null");
 
         this.credentialsProvider = credentialsProvider;
     }
@@ -948,7 +1011,12 @@ public class RedisURI implements Serializable, ConnectionPoint {
                 // compatibility with versions before 7.0 - in previous versions of the Lettuce driver there was an option to
                 // have a username and password pair as part of the RedisURI; in these cases when we were masking credentials we
                 // would get asterix for each character of the password.
-                RedisCredentials creds = credentialsProvider.resolveCredentials().block();
+                RedisCredentials creds;
+                try {
+                    creds = Futures.unwrapExceptions(credentialsProvider.resolveCredentialsAsync()).join();
+                } catch (Exception e) {
+                    throw Exceptions.bubble(e);
+                }
                 if (creds != null) {
                     String credentials = "";
 
@@ -1330,7 +1398,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         private DriverInfo driverInfo = DriverInfo.builder().build();
 
-        private RedisCredentialsProvider credentialsProvider;
+        private CredentialsProvider credentialsProvider;
 
         private boolean ssl = false;
 
@@ -1725,7 +1793,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
             LettuceAssert.notNull(username, "User name must not be null");
             LettuceAssert.notNull(password, "Password must not be null");
 
-            return withAuthentication(() -> Mono.just(RedisCredentials.just(username, password)));
+            return withAuthentication(() -> CompletableFuture.completedFuture(RedisCredentials.just(username, password)));
         }
 
         /**
@@ -1739,7 +1807,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
             LettuceAssert.notNull(source, "Source RedisURI must not be null");
 
-            return withAuthentication(source.getCredentialsProvider());
+            return withAuthentication(source.getCredentialsProviderAsync());
         }
 
         /**
@@ -1755,7 +1823,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
             LettuceAssert.notNull(username, "User name must not be null");
             LettuceAssert.notNull(password, "Password must not be null");
 
-            return withAuthentication(() -> Mono.just(RedisCredentials.just(username, password)));
+            return withAuthentication(() -> CompletableFuture.completedFuture(RedisCredentials.just(username, password)));
         }
 
         /**
@@ -1763,8 +1831,25 @@ public class RedisURI implements Serializable, ConnectionPoint {
          *
          * @param credentialsProvider the credentials provider to use
          * @since 6.2
+         * @deprecated since 7.9, use {@link #withAuthentication(CredentialsProvider)} instead; scheduled for removal in a
+         *             future major release.
          */
+        @Deprecated
         public Builder withAuthentication(RedisCredentialsProvider credentialsProvider) {
+            this.credentialsProvider = credentialsProvider;
+            return this;
+        }
+
+        /**
+         * Configures authentication using a reactor-free {@link CredentialsProvider}.
+         *
+         * @param credentialsProvider the credentials provider to use
+         * @since 7.9
+         */
+        public Builder withAuthentication(CredentialsProvider credentialsProvider) {
+
+            LettuceAssert.notNull(credentialsProvider, "CredentialsProvider must not be null");
+
             this.credentialsProvider = credentialsProvider;
             return this;
         }
@@ -1796,7 +1881,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * @since 4.4
          */
         public Builder withPassword(char[] password) {
-            return withAuthentication(() -> Mono.just(RedisCredentials.just(null, password)));
+            return withAuthentication(() -> CompletableFuture.completedFuture(RedisCredentials.just(null, password)));
         }
 
         /**
@@ -1808,7 +1893,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         public Builder withTimeout(Duration timeout) {
 
             LettuceAssert.notNull(timeout, "Timeout must not be null");
-            LettuceAssert.notNull(!timeout.isNegative(), "Timeout must be greater or equal 0");
+            LettuceAssert.isTrue(!timeout.isNegative(), "Timeout must be greater or equal 0");
 
             this.timeout = timeout;
             return this;

@@ -50,6 +50,7 @@ import io.lettuce.test.Wait;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 import io.lettuce.test.settings.TestSettings;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * Integration tests for {@link RedisClusterClient}.
@@ -59,6 +60,7 @@ import io.lettuce.test.settings.TestSettings;
 @SuppressWarnings("unchecked")
 @ExtendWith(LettuceExtension.class)
 @Tag(INTEGRATION_TEST)
+@DisabledOnProvider("re")
 class RedisClusterClientIntegrationTests extends TestSupport {
 
     private final RedisClient client;

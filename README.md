@@ -7,6 +7,7 @@
  [![Maven Central](https://img.shields.io/maven-central/v/io.lettuce/lettuce-core?versionSuffix=RELEASE&logo=redis
  )](https://maven-badges.herokuapp.com/maven-central/io.lettuce/lettuce-core)
  [![Javadocs](https://www.javadoc.io/badge/io.lettuce/lettuce-core.svg)](https://www.javadoc.io/doc/io.lettuce/lettuce-core)
+ [![Protected by Tracebit Community Edition](.github/assets/tracebit-badge.svg)](https://community.tracebit.com/supplychainattacks)
 
 [![Discord](https://img.shields.io/discord/697882427875393627.svg?style=social&logo=discord)](https://discord.gg/redis)
 [![Twitch](https://img.shields.io/twitch/status/redisinc?style=social)](https://www.twitch.tv/redisinc)
@@ -27,10 +28,10 @@ This version of Lettuce has been tested against the latest Redis source-build.
 * [Redis Sentinel](https://redis.github.io/lettuce/ha-sharding/#redis-sentinel_1)
 * [Redis Cluster](https://redis.github.io/lettuce/ha-sharding/#redis-cluster)
 * [SSL](https://redis.github.io/lettuce/advanced-usage/#ssl-connections) and [Unix Domain Socket](https://redis.github.io/lettuce/advanced-usage/#unix-domain-sockets) connections
-* [Streaming API](https://redis.github.io/lettuce/advanced-usage/#streaming-api)
+* [Streaming API](https://redis.github.io/lettuce/advanced-usage/streaming-api)
 * [Codecs](https://redis.github.io/lettuce/integration-extension/#codecss) (for UTF8/bit/JSON etc. representation of your data)
 * multiple [Command Interfaces](https://github.com/redis/lettuce/wiki/Command-Interfaces-%284.0%29)
-* Support for [Native Transports](https://redis.github.io/lettuce/advanced-usage/#native-transports)
+* Support for [Native Transports](https://redis.github.io/lettuce/advanced-usage/native-transports)
 * Support [RediSearch](https://redis.github.io/lettuce/user-guide/redis-search/), [RedisJSON](https://redis.github.io/lettuce/user-guide/redis-json/) and [Redis Vector Sets](https://redis.github.io/lettuce/user-guide/vector-sets/)
 * Compatible with Java 8++ (implicit automatic module w/o descriptors)
 

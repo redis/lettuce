@@ -3,11 +3,11 @@ package io.lettuce.core.sentinel;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
 
 import io.lettuce.core.RedisCredentials;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,7 +21,6 @@ import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.WithPassword;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.settings.TestSettings;
-import reactor.core.publisher.Mono;
 
 /**
  * Integration tests for Redis Sentinel using ACL authentication.
@@ -31,7 +30,6 @@ import reactor.core.publisher.Mono;
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
 @EnabledOnCommand("ACL")
-@Disabled("Failing with latest versions of Linux")
 public class SentinelAclIntegrationTests extends TestSupport {
 
     private final RedisClient redisClient;
@@ -56,8 +54,8 @@ public class SentinelAclIntegrationTests extends TestSupport {
 
         // sentinel node auth
         for (RedisURI sentinel : sentinelWithAcl.getSentinels()) {
-            sentinel.setCredentialsProvider(
-                    () -> Mono.just(RedisCredentials.just(TestSettings.aclUsername(), TestSettings.aclPassword())));
+            sentinel.setCredentialsProvider(() -> CompletableFuture
+                    .completedFuture(RedisCredentials.just(TestSettings.aclUsername(), TestSettings.aclPassword())));
         }
     }
 

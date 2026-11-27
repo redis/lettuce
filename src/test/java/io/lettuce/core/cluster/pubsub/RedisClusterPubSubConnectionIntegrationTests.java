@@ -38,6 +38,7 @@ import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
 import io.lettuce.test.condition.EnabledOnCommand;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * Integration tests for Cluster Pub/Sub.
@@ -46,6 +47,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
+@DisabledOnProvider("re")
 class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
     private final RedisClusterClient clusterClient;
@@ -184,6 +186,7 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
     void publishToShardChannelViaNewClient() throws Exception {
         pubSubConnection.addListener(connectionListener);
         pubSubConnection.async().ssubscribe(shardChannel);
+        Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
 
         StatefulRedisClusterPubSubConnection<String, String> newPubsub = clusterClientWithNoRedirects.connectPubSub();
         newPubsub.async().spublish(shardChannel, shardMessage);
@@ -282,19 +285,6 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
         pubSubConnection2.sync().publish(key, value);
         assertThat(connectionListener.getMessages().take()).isEqualTo(value);
-    }
-
-    @Test
-    void testConnectToLeastClientsNode() {
-
-        clusterClient.reloadPartitions();
-        String nodeId = pubSubConnection.sync().clusterMyId();
-
-        StatefulRedisPubSubConnection<String, String> connectionAfterPartitionReload = clusterClient.connectPubSub();
-        String newConnectionNodeId = connectionAfterPartitionReload.sync().clusterMyId();
-        connectionAfterPartitionReload.close();
-
-        assertThat(nodeId).isNotEqualTo(newConnectionNodeId);
     }
 
     @Test

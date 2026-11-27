@@ -2,6 +2,7 @@ package io.lettuce.core.support;
 
 import static io.lettuce.core.support.ConnectionWrapping.HasTargetConnection;
 
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -62,6 +63,7 @@ import io.lettuce.core.support.ConnectionWrapping.Origin;
  *
  * @author Mark Paluch
  * @author dae won
+ * @author JiHongKim98
  * @since 4.3
  */
 public abstract class ConnectionPoolSupport {
@@ -144,9 +146,10 @@ public abstract class ConnectionPoolSupport {
                 new RedisPooledObjectFactory<>(connectionSupplier, validationPredicate), config) {
 
             @Override
-            public T borrowObject() throws Exception {
-                return wrapConnections ? ConnectionWrapping.wrapConnection(super.borrowObject(), poolRef.get())
-                        : super.borrowObject();
+            public T borrowObject(Duration borrowMaxWaitDuration) throws Exception {
+                return wrapConnections
+                        ? ConnectionWrapping.wrapConnection(super.borrowObject(borrowMaxWaitDuration), poolRef.get())
+                        : super.borrowObject(borrowMaxWaitDuration);
             }
 
             @Override

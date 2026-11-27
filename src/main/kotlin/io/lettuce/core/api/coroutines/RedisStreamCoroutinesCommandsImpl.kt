@@ -26,6 +26,7 @@ import io.lettuce.core.api.reactive.RedisStreamReactiveCommands
 import io.lettuce.core.models.stream.ClaimedMessages
 import io.lettuce.core.models.stream.PendingMessage
 import io.lettuce.core.models.stream.PendingMessages
+import io.lettuce.core.models.stream.StreamEntryDeletionResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
@@ -44,6 +45,10 @@ internal class RedisStreamCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun xack(key: K, group: K, vararg messageIds: String): Long? = ops.xack(key, group, *messageIds).awaitFirstOrNull()
 
+    override suspend fun xnack(key: K, group: K, mode: XNackMode, messageId: String): Long? = ops.xnack(key, group, mode, messageId).awaitFirstOrNull()
+
+    override suspend fun xnack(key: K, group: K, mode: XNackMode, vararg messageIds: String): Long? = ops.xnack(key, group, mode, *messageIds).awaitFirstOrNull()
+
     override suspend fun xadd(key: K, body: Map<K, V>): String? = ops.xadd(key, body).awaitFirstOrNull()
 
     override suspend fun xadd(key: K, args: XAddArgs, body: Map<K, V>): String? = ops.xadd(key, args, body).awaitFirstOrNull()
@@ -54,11 +59,29 @@ internal class RedisStreamCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun xautoclaim(key: K, args: XAutoClaimArgs<K>): ClaimedMessages<K, V>? = ops.xautoclaim(key, args).awaitFirstOrNull()
 
+    override suspend fun xcfgset(key: K, args: XCfgSetArgs): String? = ops.xcfgset(key, args).awaitFirstOrNull()
+
     override fun xclaim(key: K, consumer: Consumer<K>, minIdleTime: Long, vararg messageIds: String): Flow<StreamMessage<K, V>> = ops.xclaim(key, consumer, minIdleTime, *messageIds).asFlow()
 
     override fun xclaim(key: K, consumer: Consumer<K>, args: XClaimArgs, vararg messageIds: String): Flow<StreamMessage<K, V>> = ops.xclaim(key, consumer, args, *messageIds).asFlow()
 
     override suspend fun xdel(key: K, vararg messageIds: String): Long? = ops.xdel(key, *messageIds).awaitFirstOrNull()
+
+    override fun xackdel(key: K, group: K, vararg messageIds: String): Flow<StreamEntryDeletionResult> =
+        ops.xackdel(key, group, *messageIds).asFlow()
+
+    override fun xackdel(
+        key: K,
+        group: K,
+        policy: StreamDeletionPolicy,
+        vararg messageIds: String
+    ): Flow<StreamEntryDeletionResult> = ops.xackdel(key, group, policy, *messageIds).asFlow()
+
+    override fun xdelex(key: K, vararg messageIds: String): Flow<StreamEntryDeletionResult> =
+        ops.xdelex(key, *messageIds).asFlow()
+
+    override fun xdelex(key: K, policy: StreamDeletionPolicy, vararg messageIds: String): Flow<StreamEntryDeletionResult> =
+        ops.xdelex(key, policy, *messageIds).asFlow()
 
     override suspend fun xgroupCreate(streamOffset: StreamOffset<K>, group: K): String? = ops.xgroupCreate(streamOffset, group).awaitFirstOrNull()
 

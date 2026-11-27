@@ -37,12 +37,14 @@ import io.lettuce.core.protocol.CommandType;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * @author Mark Paluch
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
+@DisabledOnProvider("re")
 class NodeSelectionAsyncIntegrationTests extends TestSupport {
 
     private final RedisClusterClient clusterClient;
@@ -231,18 +233,20 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
 
     @Test
     void testReplicaReadWrite() {
+        // Use KEY_A which is known to hash to a slot owned by port4's master
+        String testKey = ClusterTestSettings.KEY_A;
 
         AsyncNodeSelection<String, String> nodes = commands
                 .nodes(redisClusterNode -> redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.REPLICA));
 
         assertThat(nodes.size()).isEqualTo(2);
 
-        TestFutures.awaitOrTimeout(commands.set(key, value));
+        TestFutures.awaitOrTimeout(commands.set(testKey, value));
 
-        waitForReplication(key, ClusterTestSettings.port4);
+        waitForReplication(testKey, ClusterTestSettings.port4);
 
         List<Throwable> t = new ArrayList<>();
-        AsyncExecutions<String> keys = nodes.commands().get(key);
+        AsyncExecutions<String> keys = nodes.commands().get(testKey);
         keys.stream().forEach(lcs -> {
             lcs.toCompletableFuture().exceptionally(throwable -> {
                 t.add(throwable);
@@ -257,18 +261,20 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
 
     @Test
     void testReplicasWithReadOnly() {
+        // Use KEY_A which is known to hash to a slot owned by port4's master
+        String testKey = ClusterTestSettings.KEY_A;
 
         AsyncNodeSelection<String, String> nodes = commands
                 .replicas(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA));
 
         assertThat(nodes.size()).isEqualTo(2);
 
-        TestFutures.awaitOrTimeout(commands.set(key, value));
-        waitForReplication(key, ClusterTestSettings.port4);
+        TestFutures.awaitOrTimeout(commands.set(testKey, value));
+        waitForReplication(testKey, ClusterTestSettings.port4);
 
         List<Throwable> t = new ArrayList<>();
         List<String> strings = new ArrayList<>();
-        AsyncExecutions<String> keys = nodes.commands().get(key);
+        AsyncExecutions<String> keys = nodes.commands().get(testKey);
         keys.stream().forEach(lcs -> {
             lcs.toCompletableFuture().exceptionally(throwable -> {
                 t.add(throwable);

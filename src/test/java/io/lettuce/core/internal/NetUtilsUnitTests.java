@@ -13,11 +13,15 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+
+import io.lettuce.TestTags;
 
 /**
  * Unit tests for {@link NetUtils}.
  */
+@Tag(TestTags.UNIT_TEST)
 class NetUtilsUnitTests {
 
     @Test

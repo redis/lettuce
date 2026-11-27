@@ -109,6 +109,13 @@ public class ComplexOutput<K, V, T> extends CommandOutput<K, V, T> {
         }
     }
 
+    @Override
+    public void multi(int count) {
+        // Delegate to multiArray to handle transaction responses
+        // When used in MULTI/EXEC, MultiOutput calls multi() instead of the specific multi* methods
+        multiArray(count);
+    }
+
     private void multi(ComplexData newData) {
         // if there is no data set, then we are at the root object
         if (data == null) {

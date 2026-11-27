@@ -153,7 +153,7 @@ public abstract class CompressionCodec {
      */
     private static long copy(InputStream from, OutputStream to) throws IOException {
         LettuceAssert.notNull(from, "From must not be null");
-        LettuceAssert.notNull(to, "From must not be null");
+        LettuceAssert.notNull(to, "To must not be null");
         byte[] buf = new byte[4096];
         long total = 0;
         while (true) {

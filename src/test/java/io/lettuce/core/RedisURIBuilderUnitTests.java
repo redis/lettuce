@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 /**
@@ -131,6 +132,12 @@ class RedisURIBuilderUnitTests {
     @Test
     void redisWithDriverInfoNullShouldFail() {
         assertThatThrownBy(() -> RedisURI.Builder.redis("localhost").withDriverInfo(null))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void withAuthenticationNullCredentialsProviderShouldFail() {
+        assertThatThrownBy(() -> RedisURI.Builder.redis("localhost").withAuthentication((CredentialsProvider) null))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -357,6 +364,24 @@ class RedisURIBuilderUnitTests {
                     assertThat(credentials.getUsername()).isNull();
                     assertThat(credentials.getPassword()).isEqualTo("baz".toCharArray());
                 }).verifyComplete();
+    }
+
+    @Test
+    void shouldMaskCredentialsForBuilderWithAuthentication() {
+
+        RedisURI result = RedisURI.Builder.redis("localhost", 1234).withAuthentication("alice", "secret").withDatabase(5)
+                .build();
+
+        assertThat(result).hasToString("redis://alice:******@localhost:1234/5");
+    }
+
+    @Test
+    void shouldMaskCredentialsForBuilderWithPassword() {
+
+        RedisURI result = RedisURI.Builder.redis("localhost", 1234).withPassword("secret".toCharArray()).withDatabase(5)
+                .build();
+
+        assertThat(result).hasToString("redis://******@localhost:1234/5");
     }
 
     @Test

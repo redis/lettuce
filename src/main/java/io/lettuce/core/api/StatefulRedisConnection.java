@@ -27,6 +27,9 @@ public interface StatefulRedisConnection<K, V> extends StatefulConnection<K, V> 
 
     /**
      * Returns the {@link RedisCommands} API for the current connection. Does not create a new connection.
+     * <p>
+     * Note: this accessor is scheduled for removal in a future major release; a {@code commands(...)}-based replacement is
+     * planned.
      *
      * @return the synchronous API for the underlying connection.
      */
@@ -34,6 +37,9 @@ public interface StatefulRedisConnection<K, V> extends StatefulConnection<K, V> 
 
     /**
      * Returns the {@link RedisAsyncCommands} API for the current connection. Does not create a new connection.
+     * <p>
+     * Note: this accessor is scheduled for removal in a future major release; a {@code commands(...)}-based replacement is
+     * planned.
      *
      * @return the asynchronous API for the underlying connection.
      */
@@ -43,8 +49,13 @@ public interface StatefulRedisConnection<K, V> extends StatefulConnection<K, V> 
      * Returns the {@link RedisReactiveCommands} API for the current connection. Does not create a new connection.
      *
      * @return the reactive API for the underlying connection.
+     * @deprecated since 7.8, use {@link #commands(CommandsFactory)} with {@link RedisReactiveCommands#factory()} instead;
+     *             scheduled for removal in a future major release.
      */
-    RedisReactiveCommands<K, V> reactive();
+    @Deprecated
+    default RedisReactiveCommands<K, V> reactive() {
+        return commands(RedisReactiveCommands.factory());
+    }
 
     /**
      * Add a new {@link PushListener listener} to consume push messages.
@@ -61,5 +72,18 @@ public interface StatefulRedisConnection<K, V> extends StatefulConnection<K, V> 
      * @since 6.0
      */
     void removeListener(PushListener listener);
+
+    /**
+     * Returns the command API created by {@code factory}, bound to this connection. Does not create a new connection.
+     * <p>
+     * The command API is created once per connection and cached; calling this method again with the same {@code factory}
+     * returns the same instance.
+     *
+     * @param factory the command API factory, must not be {@code null}
+     * @param <T> the command API type
+     * @return the command API bound to this connection
+     * @since 7.8
+     */
+    <T> T commands(CommandsFactory<StatefulRedisConnection<K, V>, T> factory);
 
 }

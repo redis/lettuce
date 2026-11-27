@@ -77,7 +77,7 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
 
     @BeforeEach
     void setUp() {
-        this.connection.async().flushall();
+        this.redis.flushall();
     }
 
     @Test
@@ -91,6 +91,16 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
         Wait.untilEquals(value, () -> redis.get(key)).waitOrTimeout();
 
         assertThat(redis.get(key)).isEqualTo(value);
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void commandsAccessorReturnsWorkingReactiveApi() {
+
+        RedisReactiveCommands<String, String> commands = connection.commands(RedisReactiveCommands.factory());
+
+        StepVerifier.create(commands.ping()).expectNext("PONG").verifyComplete();
+        assertThat(commands).isSameAs(connection.reactive());
     }
 
     @Test

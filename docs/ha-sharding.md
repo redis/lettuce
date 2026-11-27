@@ -385,14 +385,14 @@ the same cluster topology view. The view can be updated in three ways:
 
 1.  Either by calling `RedisClusterClient.reloadPartitions`
 
-2.  [Periodic updates](advanced-usage.md#cluster-specific-options) in the background
+2.  [Periodic updates](advanced-usage/client-options.md#cluster-specific-options) in the background
     based on an interval
 
-3.  [Adaptive updates](advanced-usage.md#cluster-specific-options) in the background
+3.  [Adaptive updates](advanced-usage/client-options.md#cluster-specific-options) in the background
     based on persistent disconnects and `MOVED`/`ASK` redirections
 
 By default, commands follow `-ASK` and `-MOVED` redirects [up to 5
-times](advanced-usage.md#cluster-specific-options) until the command execution is
+times](advanced-usage/client-options.md#cluster-specific-options) until the command execution is
 considered to be failed. Background topology updating starts with the
 first connection obtained through `RedisClusterClient`.
 
@@ -427,9 +427,39 @@ and closed after obtaining the topology:
 - Set of connections for cluster topology refresh (a connection to each
   cluster node)
 
+### Warming up connections
+
+Because per-node connections are allocated on demand, the first command routed
+to each node pays the cost of establishing its connection (a TCP connection
+plus a TLS handshake when TLS is enabled). Applications that are sensitive to
+first-request latency at startup - or that run behind a small command timeout -
+can open these connections ahead of time instead of on the request path.
+
+Use the node selection API to open a connection to every node before serving
+traffic. `upstream()` selects all primaries; sending a command (such as `PING`)
+to the selection forces each per-node connection to be established:
+
+```java
+StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
+
+// Open a connection to every primary node.
+connection.sync().upstream().commands().ping();
+
+// When reading from replicas (ReadFrom.REPLICA / REPLICA_PREFERRED),
+// also warm the replica connections:
+// connection.sync()
+//         .readonly(node -> node.is(RedisClusterNode.NodeFlag.REPLICA))
+//         .commands().ping();
+```
+
+The node selections resolve connections by node address and intent, so they
+open the same connections that command routing uses later. Connections to nodes
+that join the cluster after a topology change are still created on demand; if
+required, re-run the warm-up in response to a cluster topology change.
+
 ### Client-options
 
-See [Cluster-specific Client options](advanced-usage.md#cluster-specific-options).
+See [Cluster-specific Client options](advanced-usage/client-options.md#cluster-specific-options).
 
 #### Examples
 

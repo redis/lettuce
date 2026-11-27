@@ -39,9 +39,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
-
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
@@ -53,7 +50,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * Unit tests for {@link MaintenanceAwareConnectionWatchdog}.
@@ -78,13 +78,10 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     private EventExecutorGroup reconnectWorkers;
 
     @Mock
-    private Mono<SocketAddress> socketAddressSupplier;
+    private Supplier<CompletionStage<SocketAddress>> socketAddressSupplier;
 
     @Mock
     private ReconnectionListener reconnectionListener;
-
-    @Mock
-    private ConnectionFacade connectionFacade;
 
     @Mock
     private EventBus eventBus;
@@ -135,7 +132,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         when(endpoint.getId()).thenReturn("test-endpoint");
 
         watchdog = new MaintenanceAwareConnectionWatchdog(reconnectDelay, clientOptions, realBootstrap, timer, reconnectWorkers,
-                socketAddressSupplier, reconnectionListener, connectionFacade, eventBus, endpoint);
+                socketAddressSupplier, reconnectionListener, eventBus, endpoint);
 
         // Set up the reconnectionHandler field using ReflectionTestUtils
         setField(watchdog, "reconnectionHandler", reconnectionHandler);
@@ -247,7 +244,11 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         verify(rebindAwareAddressSupplier).rebind(eq(Duration.ofSeconds(15)), eq(new InetSocketAddress("127.0.0.1", 6380)));
         verify(channel).close();
         verify(rebindAttribute).set(RebindState.COMPLETED);
-        verify(component1, never()).onRebindStarted(any(), any()); // Not called when stack is empty
+        // Commands issued after the MOVING notification are buffered until the new connection is up, so the timeouts
+        // have to be relaxed for the re-bind window even when nothing was in flight when the notification arrived.
+        verify(component1).onRebindStarted(eq(Duration.ofSeconds(15)), eq(new InetSocketAddress("127.0.0.1", 6380)));
+        // The channel is closed here, so this is the only place that can report the completion of the re-bind.
+        verify(component1).onRebindCompleted();
     }
 
     @Test
@@ -275,6 +276,8 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         verify(rebindAttribute).set(RebindState.STARTED);
         verify(channel, never()).close();
         verify(component1).onRebindStarted(any(), any()); // Called when stack is not empty
+        // The stack still has to be drained, channelReadComplete() reports the completion later on.
+        verify(component1, never()).onRebindCompleted();
     }
 
     @Test
@@ -509,7 +512,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     }
 
     @Test
-    void testRebindAwareAddressSupplierWithFixedClock() {
+    void testRebindAwareAddressSupplierWithFixedClock() throws Exception {
         // Given
         Instant fixedTime = Instant.parse("2023-01-01T10:00:00Z");
         Clock fixedClock = Clock.fixed(fixedTime, ZoneId.systemDefault());
@@ -517,19 +520,19 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
 
         SocketAddress originalAddress = new InetSocketAddress("localhost", 6379);
         SocketAddress rebindAddress = new InetSocketAddress("127.0.0.1", 6380);
-        Mono<SocketAddress> originalSupplier = Mono.just(originalAddress);
+        Supplier<CompletionStage<SocketAddress>> originalSupplier = () -> CompletableFuture.completedFuture(originalAddress);
 
         // When - rebind with 30 seconds duration
         supplier.rebind(Duration.ofSeconds(30), rebindAddress);
 
         // Then - should return rebind address since we're within the cutoff time
-        Mono<SocketAddress> wrappedSupplier = supplier.wrappedSupplier(originalSupplier);
+        Supplier<CompletionStage<SocketAddress>> wrappedSupplier = supplier.wrappedSupplier(originalSupplier);
 
-        StepVerifier.create(wrappedSupplier).expectNext(rebindAddress).verifyComplete();
+        assertThat(wrappedSupplier.get().toCompletableFuture().get()).isEqualTo(rebindAddress);
     }
 
     @Test
-    void testRebindAwareAddressSupplierWithNullRebindAddress() {
+    void testRebindAwareAddressSupplierWithNullRebindAddress() throws Exception {
         // Given
         MutableClock clock = new MutableClock(Instant.parse("2023-01-01T10:00:00Z"));
         RebindAwareAddressSupplier supplier = new RebindAwareAddressSupplier(clock);
@@ -537,66 +540,66 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         SocketAddress originalAddress = new InetSocketAddress("localhost", 6379);
         // Null rebind address - should return original address
         SocketAddress rebindAddress = null;
-        Mono<SocketAddress> originalSupplier = Mono.just(originalAddress);
+        Supplier<CompletionStage<SocketAddress>> originalSupplier = () -> CompletableFuture.completedFuture(originalAddress);
 
         // When - rebind with 30 seconds duration
         supplier.rebind(Duration.ofSeconds(30), rebindAddress);
 
         // Should return original address since rebind address is null
-        Mono<SocketAddress> wrappedSupplier = supplier.wrappedSupplier(originalSupplier);
+        Supplier<CompletionStage<SocketAddress>> wrappedSupplier = supplier.wrappedSupplier(originalSupplier);
 
-        StepVerifier.create(wrappedSupplier).expectNext(originalAddress).verifyComplete();
+        assertThat(wrappedSupplier.get().toCompletableFuture().get()).isEqualTo(originalAddress);
 
         // Step 5: Advance clock past expiration (31 seconds)
         clock.tick(Duration.ofSeconds(31));
 
-        // Step 6: New subscription to same wrappedSupplier should return original address again
-        StepVerifier.create(wrappedSupplier).expectNext(originalAddress).verifyComplete();
+        // Step 6: New call to same wrappedSupplier should return original address again
+        assertThat(wrappedSupplier.get().toCompletableFuture().get()).isEqualTo(originalAddress);
     }
 
     @Test
-    void testRebindAwareAddressSupplierExpirationWithFixedClock() {
+    void testRebindAwareAddressSupplierExpirationWithFixedClock() throws Exception {
         // Given - Create supplier with a mutable clock that we can advance
         MutableClock clock = new MutableClock(Instant.parse("2023-01-01T10:00:00Z"));
 
         RebindAwareAddressSupplier supplier = new RebindAwareAddressSupplier(clock);
         SocketAddress originalAddress = new InetSocketAddress("localhost", 6379);
         SocketAddress rebindAddress = new InetSocketAddress("127.0.0.1", 6380);
-        Mono<SocketAddress> originalSupplier = Mono.just(originalAddress);
+        Supplier<CompletionStage<SocketAddress>> originalSupplier = () -> CompletableFuture.completedFuture(originalAddress);
 
         // Step 1: Create wrapped supplier once (same instance used throughout)
-        Mono<SocketAddress> wrappedSupplier = supplier.wrappedSupplier(originalSupplier);
+        Supplier<CompletionStage<SocketAddress>> wrappedSupplier = supplier.wrappedSupplier(originalSupplier);
 
-        // Step 2: First subscription should return original address (no rebind set yet)
-        StepVerifier.create(wrappedSupplier).expectNext(originalAddress).verifyComplete();
+        // Step 2: First call should return original address (no rebind set yet)
+        assertThat(wrappedSupplier.get().toCompletableFuture().get()).isEqualTo(originalAddress);
 
         // Step 3: Invoke rebind with 30 seconds duration
         supplier.rebind(Duration.ofSeconds(30), rebindAddress);
 
-        // Step 4: New subscription to same wrappedSupplier should return rebind address
-        StepVerifier.create(wrappedSupplier).expectNext(rebindAddress).verifyComplete();
+        // Step 4: New call to same wrappedSupplier should return rebind address
+        assertThat(wrappedSupplier.get().toCompletableFuture().get()).isEqualTo(rebindAddress);
 
         // Step 5: Advance clock past expiration (31 seconds)
         clock.tick(Duration.ofSeconds(31));
 
-        // Step 6: New subscription to same wrappedSupplier should return original address again
-        StepVerifier.create(wrappedSupplier).expectNext(originalAddress).verifyComplete();
+        // Step 6: New call to same wrappedSupplier should return original address again
+        assertThat(wrappedSupplier.get().toCompletableFuture().get()).isEqualTo(originalAddress);
     }
 
     @Test
-    void testRebindAwareAddressSupplierWithNullState() {
+    void testRebindAwareAddressSupplierWithNullState() throws Exception {
         // Given
         Clock fixedClock = Clock.fixed(Instant.now(), ZoneId.systemDefault());
         RebindAwareAddressSupplier supplier = new RebindAwareAddressSupplier(fixedClock);
 
         SocketAddress originalAddress = new InetSocketAddress("localhost", 6379);
-        Mono<SocketAddress> originalSupplier = Mono.just(originalAddress);
+        Supplier<CompletionStage<SocketAddress>> originalSupplier = () -> CompletableFuture.completedFuture(originalAddress);
 
         // When - no rebind has been set
-        Mono<SocketAddress> wrappedSupplier = supplier.wrappedSupplier(originalSupplier);
+        Supplier<CompletionStage<SocketAddress>> wrappedSupplier = supplier.wrappedSupplier(originalSupplier);
 
         // Then - should return original address
-        StepVerifier.create(wrappedSupplier).expectNext(originalAddress).verifyComplete();
+        assertThat(wrappedSupplier.get().toCompletableFuture().get()).isEqualTo(originalAddress);
 
     }
 
@@ -643,6 +646,8 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         verify(rebindAttribute).set(RebindState.STARTED);
         verify(channel, never()).close();
         verify(component1).onRebindStarted(any(), any()); // Called when stack is not empty
+        // The stack still has to be drained, channelReadComplete() reports the completion later on.
+        verify(component1, never()).onRebindCompleted();
     }
 
     /**

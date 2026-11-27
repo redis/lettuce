@@ -3,6 +3,8 @@ package io.lettuce.core.output;
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -21,6 +23,66 @@ import io.netty.buffer.Unpooled;
  */
 @Tag(UNIT_TEST)
 class ObjectOutputUnitTests {
+
+    @Test
+    void shouldParseTopLevelBulkString() {
+
+        String in = "$4\r\ntrue\r\n";
+        RedisStateMachine rsm = new RedisStateMachine(ByteBufAllocator.DEFAULT);
+        ObjectOutput<String, String> output = new ObjectOutput<>(StringCodec.UTF8);
+        rsm.decode(Unpooled.wrappedBuffer(in.getBytes(StandardCharsets.UTF_8)), output, exception -> {
+            throw (RuntimeException) exception;
+        });
+        assertThat(output.get()).isEqualTo("true");
+    }
+
+    @Test
+    void shouldParseTopLevelBoolean() {
+
+        RedisStateMachine rsm = new RedisStateMachine(ByteBufAllocator.DEFAULT);
+        ObjectOutput<String, String> output = new ObjectOutput<>(StringCodec.UTF8);
+        rsm.decode(Unpooled.wrappedBuffer("#t\r\n".getBytes(StandardCharsets.UTF_8)), output, exception -> {
+            throw (RuntimeException) exception;
+        });
+        assertThat(output.get()).isEqualTo(true);
+    }
+
+    @Test
+    void shouldParseTopLevelDouble() {
+
+        String in = ",1.5\r\n";
+        RedisStateMachine rsm = new RedisStateMachine(ByteBufAllocator.DEFAULT);
+        ObjectOutput<String, String> output = new ObjectOutput<>(StringCodec.UTF8);
+        rsm.decode(Unpooled.wrappedBuffer(in.getBytes(StandardCharsets.UTF_8)), output, exception -> {
+            throw (RuntimeException) exception;
+        });
+        assertThat(output.get()).isEqualTo(1.5d);
+    }
+
+    @Test
+    void shouldParseTopLevelIntegerAsScalar() {
+
+        String in = ":3\r\n";
+        RedisStateMachine rsm = new RedisStateMachine(ByteBufAllocator.DEFAULT);
+        ObjectOutput<String, String> output = new ObjectOutput<>(StringCodec.UTF8);
+        rsm.decode(Unpooled.wrappedBuffer(in.getBytes(StandardCharsets.UTF_8)), output, exception -> {
+            throw (RuntimeException) exception;
+        });
+        assertThat(output.get()).isEqualTo(3L);
+    }
+
+    @Test
+    void shouldParseTopLevelArrayContainingInteger() {
+
+        String in = "*1\r\n:3\r\n";
+        RedisStateMachine rsm = new RedisStateMachine(ByteBufAllocator.DEFAULT);
+        ObjectOutput<String, String> output = new ObjectOutput<>(StringCodec.UTF8);
+        rsm.decode(Unpooled.wrappedBuffer(in.getBytes(StandardCharsets.UTF_8)), output, exception -> {
+            throw (RuntimeException) exception;
+        });
+        assertThat(output.get()).isInstanceOf(List.class);
+        assertThat(output.get()).isEqualTo(Collections.singletonList(3L));
+    }
 
     @Test
     void shouldParseHelloWithModules() {

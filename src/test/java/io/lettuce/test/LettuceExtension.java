@@ -1,13 +1,13 @@
 package io.lettuce.test;
 
 import java.io.Closeable;
+import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
-import java.time.Duration;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -25,10 +25,12 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.dynamic.support.ResolvableType;
+import io.lettuce.core.failover.MultiDbClient;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.test.resource.DefaultRedisClient;
 import io.lettuce.test.resource.DefaultRedisClusterClient;
+import io.lettuce.test.resource.DefaultRedisMultiDbClient;
 import io.lettuce.test.resource.TestClientResources;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -41,6 +43,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * <li>{@link ClientResources} (singleton)</li>
  * <li>{@link RedisClient} (singleton)</li>
  * <li>{@link RedisClusterClient} (singleton)</li>
+ * <li>{@link MultiDbClient} (singleton and qualified instances via {@code @NoFailback})</li>
  * <li>{@link StatefulRedisConnection} (singleton and dedicated instances via {@code @New})</li>
  * <li>{@link StatefulRedisPubSubConnection} (singleton and dedicated instances via {@code @New})</li>
  * <li>{@link StatefulRedisClusterConnection} (singleton and dedicated instances via {@code @New})</li>
@@ -62,6 +65,23 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * }
  * </pre>
  *
+ * <h3>Qualified injection for MultiDbClient</h3>
+ *
+ * Multiple {@link MultiDbClient} instances with different configurations can be injected using qualifier annotations:
+ *
+ * <pre class="code">
+ * &#064;ExtendWith(LettuceExtension.class)
+ * public class MultiDbTest {
+ *
+ *     &#064;Inject
+ *     public MultiDbTest(MultiDbClient defaultClient, &#064;NoFailback MultiDbClient noFailbackClient) {
+ *         // defaultClient has failback enabled (default)
+ *         // noFailbackClient has failback disabled
+ *     }
+ *
+ * }
+ * </pre>
+ *
  * <h3>Resource lifecycle</h3>
  *
  * This extension allocates resources lazily and stores them in its {@link ExtensionContext}
@@ -74,10 +94,12 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * {@code @New}.
  *
  * @author Mark Paluch
+ * @author Ali Takavci
  * @since 5.1.1
  * @see ParameterResolver
  * @see Inject
  * @see New
+ * @see NoFailback
  * @see BeforeEachCallback
  * @see AfterEachCallback
  * @see AfterAllCallback
@@ -88,18 +110,31 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
 
     private final ExtensionContext.Namespace LETTUCE = ExtensionContext.Namespace.create("lettuce.parameters");
 
-    private static final Set<Class<?>> SUPPORTED_INJECTABLE_TYPES = new HashSet<>(
-            Arrays.asList(StatefulRedisConnection.class, StatefulRedisPubSubConnection.class, RedisCommands.class,
-                    RedisClient.class, ClientResources.class, StatefulRedisClusterConnection.class, RedisClusterClient.class));
+    private static final Set<Class<?>> SUPPORTED_INJECTABLE_TYPES = new HashSet<>(Arrays.asList(StatefulRedisConnection.class,
+            StatefulRedisPubSubConnection.class, RedisCommands.class, RedisClient.class, ClientResources.class,
+            StatefulRedisClusterConnection.class, RedisClusterClient.class, MultiDbClient.class));
 
     private static final Set<Class<?>> CLOSE_AFTER_EACH = new HashSet<>(Arrays.asList(StatefulRedisConnection.class,
             StatefulRedisPubSubConnection.class, StatefulRedisClusterConnection.class));
 
     private static final List<Supplier<?>> SUPPLIERS = Arrays.asList(ClientResourcesSupplier.INSTANCE,
             RedisClusterClientSupplier.INSTANCE, RedisClientSupplier.INSTANCE, StatefulRedisConnectionSupplier.INSTANCE,
-            StatefulRedisPubSubConnectionSupplier.INSTANCE, StatefulRedisClusterConnectionSupplier.INSTANCE);
+            StatefulRedisPubSubConnectionSupplier.INSTANCE, StatefulRedisClusterConnectionSupplier.INSTANCE,
+            RedisMultiDbClientSupplier.INSTANCE);
 
     private static final List<Function<?, ?>> RESOURCE_FUNCTIONS = Collections.singletonList(RedisCommandsFunction.INSTANCE);
+
+    /**
+     * Registry mapping qualifier annotation types to their corresponding suppliers. This allows for extensible qualifier
+     * support without hardcoding qualifier logic in the core resolution method.
+     */
+    private static final Map<Class<? extends Annotation>, QualifiedSupplier<?>> QUALIFIED_SUPPLIERS = new HashMap<>();
+
+    static {
+        // Register qualified suppliers
+        QUALIFIED_SUPPLIERS.put(NoFailback.class,
+                new QualifiedSupplier<>(MultiDbClient.class, RedisMultiDbClientNoFailbackSupplier.INSTANCE));
+    }
 
     @Override
     public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext)
@@ -126,9 +161,13 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
         ExtensionContext.Store store = getStore(extensionContext);
         Parameter parameter = parameterContext.getParameter();
         Type parameterizedType = parameter.getParameterizedType();
+
+        // Determine qualifier for the parameter
+        String qualifier = getQualifier(parameterContext);
+
         if (parameterContext.isAnnotated(New.class)) {
 
-            Object instance = doGetInstance(parameterizedType);
+            Object instance = doGetInstance(parameterizedType, qualifier);
 
             if (instance instanceof Closeable || instance instanceof AutoCloseable) {
 
@@ -141,14 +180,63 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
             return instance;
         }
 
-        return store.getOrComputeIfAbsent(parameter.getType(), it -> doGetInstance(parameterizedType));
+        // Use Class key for unqualified singletons; composite key suffixed with qualifier for qualified instances.
+        String storeKey = parameter.getType().getName() + qualifier;
+        return store.getOrComputeIfAbsent(storeKey, it -> doGetInstance(parameterizedType, qualifier));
     }
 
-    private Object doGetInstance(Type parameterizedType) {
+    /**
+     * Determines the qualifier for a parameter based on its annotations. Searches the registered qualifier annotations and
+     * returns a qualifier string if found.
+     *
+     * @param parameterContext the parameter context
+     * @return the qualifier string (e.g., ":NoFailback"), or empty string if no qualifier
+     */
+    private String getQualifier(ParameterContext parameterContext) {
+        // Check all registered qualifier annotations
+        for (Class<? extends Annotation> qualifierType : QUALIFIED_SUPPLIERS.keySet()) {
+            if (parameterContext.isAnnotated(qualifierType)) {
+                return ":" + qualifierType.getSimpleName();
+            }
+        }
+        return "";
+    }
 
+    /**
+     * Gets an instance of the requested type, optionally using a qualified supplier if a qualifier is provided.
+     *
+     * @param parameterizedType the requested type
+     * @param qualifier the qualifier string (empty for default, or e.g., ":NoFailback" for qualified)
+     * @return the instance
+     */
+    private Object doGetInstance(Type parameterizedType, String qualifier) {
+
+        // Check if we have a qualified supplier for this qualifier
+        if (!qualifier.isEmpty()) {
+            Optional<QualifiedSupplier<?>> qualifiedSupplier = findQualifiedSupplier(parameterizedType, qualifier);
+            if (qualifiedSupplier.isPresent()) {
+                return qualifiedSupplier.get().supplier.get();
+            }
+        }
+
+        // Default behavior for non-qualified or other types
         Optional<ResourceFunction> resourceFunction = findFunction(parameterizedType);
         return resourceFunction.map(it -> it.function.apply(findSupplier(it.dependsOn.getType()).get()))
                 .orElseGet(() -> findSupplier(parameterizedType).get());
+    }
+
+    /**
+     * Finds a qualified supplier that matches the given type and qualifier.
+     *
+     * @param parameterizedType the requested type
+     * @param qualifier the qualifier string (e.g., ":NoFailback")
+     * @return the qualified supplier if found
+     */
+    @SuppressWarnings("unchecked")
+    private Optional<QualifiedSupplier<?>> findQualifiedSupplier(Type parameterizedType, String qualifier) {
+        return (Optional<QualifiedSupplier<?>>) (Optional<?>) QUALIFIED_SUPPLIERS.entrySet().stream()
+                .filter(entry -> qualifier.equals(":" + entry.getKey().getSimpleName())).map(Map.Entry::getValue)
+                .filter(qualifiedSupplier -> qualifiedSupplier.canProvide(parameterizedType)).findFirst();
     }
 
     /**
@@ -272,6 +360,36 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
 
     }
 
+    /**
+     * Holder for a qualified supplier that associates a target type with its supplier. This allows the extension to dynamically
+     * resolve qualified instances based on the parameter type and qualifier annotation.
+     *
+     * @param <T> the type of object this supplier provides
+     */
+    static class QualifiedSupplier<T> {
+
+        final Class<T> targetType;
+
+        final Supplier<T> supplier;
+
+        public QualifiedSupplier(Class<T> targetType, Supplier<T> supplier) {
+            this.targetType = targetType;
+            this.supplier = supplier;
+        }
+
+        /**
+         * Checks if this qualified supplier can provide an instance for the given type.
+         *
+         * @param requestedType the requested type
+         * @return true if this supplier can provide the requested type
+         */
+        public boolean canProvide(Type requestedType) {
+            ResolvableType requested = ResolvableType.forType(requestedType);
+            return requested.isAssignableFrom(ResolvableType.forClass(targetType));
+        }
+
+    }
+
     enum ClientResourcesSupplier implements Supplier<ClientResources> {
 
         INSTANCE;
@@ -290,6 +408,28 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
         @Override
         public RedisClient get() {
             return DefaultRedisClient.get();
+        }
+
+    }
+
+    enum RedisMultiDbClientSupplier implements Supplier<MultiDbClient> {
+
+        INSTANCE;
+
+        @Override
+        public MultiDbClient get() {
+            return DefaultRedisMultiDbClient.get();
+        }
+
+    }
+
+    enum RedisMultiDbClientNoFailbackSupplier implements Supplier<MultiDbClient> {
+
+        INSTANCE;
+
+        @Override
+        public MultiDbClient get() {
+            return DefaultRedisMultiDbClient.getNoFailback();
         }
 
     }

@@ -55,8 +55,8 @@ public class ConnectionInterruptionReactiveTest {
 
     @BeforeAll
     public static void setup() {
-        standalone = Endpoints.DEFAULT.getEndpoint("re-standalone");
-        assumeTrue(standalone != null, "Skipping test because no Redis endpoint is configured!");
+        standalone = Endpoints.DEFAULT.getEndpoint("m-standard");
+        assumeTrue(standalone != null, "Skipping test because no M-Standard Redis endpoint is configured!");
     }
 
     @ParameterizedTest(name = "Reactive Client Recovery on {0}")

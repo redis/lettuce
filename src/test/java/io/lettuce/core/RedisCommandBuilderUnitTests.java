@@ -1,16 +1,29 @@
 package io.lettuce.core;
 
+import io.lettuce.core.codec.ByteArrayCodec;
+import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.models.stream.StreamEntryDeletionResult;
+import io.lettuce.core.output.BlessFlagListOutput;
+import io.lettuce.core.output.BooleanOutput;
+import io.lettuce.core.output.KeyScanOutput;
+import io.lettuce.core.output.NullableScoredValueListOutput;
+import io.lettuce.core.output.NullableScoredValueOutput;
+import io.lettuce.core.output.ScoredValueStreamingChannel;
+import io.lettuce.core.output.ValueStreamingChannel;
 import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.ReadOnlyCommands;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -25,6 +38,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Unit tests for {@link RedisCommandBuilder}.
  *
  * @author Mark Paluch
+ * @author dae won
+ * @author Taewoong Kim
  */
 @Tag(UNIT_TEST)
 class RedisCommandBuilderUnitTests {
@@ -61,6 +76,312 @@ class RedisCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructLcs() {
+
+        Command<String, String, ?> command = sut.lcs("key1", "key2");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*3\r\n" + "$3\r\n" + "LCS\r\n" + "$4\r\n" + "key1\r\n" + "$4\r\n" + "key2\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructLcsWithArgs() {
+
+        Command<String, String, ?> command = sut.lcs("key1", "key2", LcsArgs.Builder.withIdx().minMatchLen(4).withMatchLen());
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$3\r\n" + "LCS\r\n" + "$4\r\n" + "key1\r\n" + "$4\r\n" + "key2\r\n" + "$3\r\n"
+                        + "IDX\r\n" + "$11\r\n" + "MINMATCHLEN\r\n" + "$1\r\n" + "4\r\n" + "$12\r\n" + "WITHMATCHLEN\r\n");
+    }
+
+    @Test
+    void lcsShouldEncodeKeysUsingCodec() {
+
+        RedisCommandBuilder<byte[], byte[]> builder = new RedisCommandBuilder<>(ByteArrayCodec.INSTANCE);
+        byte[] key1 = "key1".getBytes(StandardCharsets.UTF_8);
+        byte[] key2 = "key2".getBytes(StandardCharsets.UTF_8);
+
+        Command<byte[], byte[], ?> command = builder.lcs(key1, key2);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*3\r\n" + "$3\r\n" + "LCS\r\n" + "$4\r\n" + "key1\r\n" + "$4\r\n" + "key2\r\n");
+
+        command = builder.lcs(key1, key2, LcsArgs.Builder.justLen());
+        buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*4\r\n" + "$3\r\n" + "LCS\r\n" + "$4\r\n" + "key1\r\n" + "$4\r\n" + "key2\r\n" + "$3\r\n" + "LEN\r\n");
+    }
+
+    @Test
+    void lcsShouldExposeFirstKeyForClusterRouting() {
+
+        Command<String, String, ?> command = sut.lcs("key1", "key2");
+        assertThat(command.getArgs().getFirstEncodedKey()).isEqualTo(StandardCharsets.UTF_8.encode("key1"));
+
+        command = sut.lcs("key1", "key2", LcsArgs.Builder.withIdx());
+        assertThat(command.getArgs().getFirstEncodedKey()).isEqualTo(StandardCharsets.UTF_8.encode("key1"));
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void deprecatedLcsShouldEncodeKeysFromArgs() {
+
+        Command<String, String, ?> command = sut
+                .lcs(LcsArgs.Builder.keys("key1", "key2").withIdx().minMatchLen(4).withMatchLen());
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$3\r\n" + "LCS\r\n" + "$4\r\n" + "key1\r\n" + "$4\r\n" + "key2\r\n" + "$3\r\n"
+                        + "IDX\r\n" + "$11\r\n" + "MINMATCHLEN\r\n" + "$1\r\n" + "4\r\n" + "$12\r\n" + "WITHMATCHLEN\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructHimportPrepare() {
+
+        HashImport<String> fieldset = HashImport.of(seq -> "fs", "name", "email");
+        Command<String, String, ?> command = sut.himportPrepare(fieldset);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$7\r\n" + "HIMPORT\r\n" + "$7\r\n"
+                + "PREPARE\r\n" + "$2\r\n" + "fs\r\n" + "$4\r\n" + "name\r\n" + "$5\r\n" + "email\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructHimportSet() {
+
+        HashImport<String> fieldset = HashImport.of(seq -> "fs", "name", "email");
+        Command<String, String, ?> command = sut.himportSet("u:1", fieldset, "alice", "a@x.com");
+
+        assertThat(Unpooled.wrappedBuffer(command.getArgs().getFirstEncodedKey()).toString(StandardCharsets.UTF_8))
+                .isEqualTo("u:1");
+
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$7\r\n" + "HIMPORT\r\n" + "$3\r\n" + "SET\r\n"
+                + "$3\r\n" + "u:1\r\n" + "$2\r\n" + "fs\r\n" + "$5\r\n" + "alice\r\n" + "$7\r\n" + "a@x.com\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructHimportDiscard() {
+
+        HashImport<String> fieldset = HashImport.of(seq -> "fs", "name", "email");
+        Command<String, String, ?> command = sut.himportDiscard(fieldset);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*3\r\n" + "$7\r\n" + "HIMPORT\r\n" + "$7\r\n" + "DISCARD\r\n" + "$2\r\n" + "fs\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByIndex() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY, ZRange.byIndex(0, 2));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*4\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n" + "$1\r\n" + "0\r\n" + "$1\r\n" + "2\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByIndexRev() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY, ZRange.byIndex(0, 2).rev());
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        // index boundaries are not swapped with REV
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$1\r\n" + "0\r\n" + "$1\r\n" + "2\r\n" + "$3\r\n" + "REV\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByScore() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY, ZRange.byScore(Range.create(200, 400)));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$3\r\n" + "200\r\n" + "$3\r\n" + "400\r\n" + "$7\r\n" + "BYSCORE\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByScoreDoubles() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY, ZRange.byScore(1.5, 10));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$3\r\n" + "1.5\r\n" + "$4\r\n" + "10.0\r\n" + "$7\r\n" + "BYSCORE\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByScoreRevLimit() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY, ZRange.byScore(Range.create(200, 400)).rev().limit(1, 2));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        // score boundaries are emitted max-first with REV
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*9\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$3\r\n" + "400\r\n" + "$3\r\n" + "200\r\n" + "$7\r\n" + "BYSCORE\r\n" + "$3\r\n" + "REV\r\n" + "$5\r\n"
+                + "LIMIT\r\n" + "$1\r\n" + "1\r\n" + "$1\r\n" + "2\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByScoreWithBoundaries() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY,
+                ZRange.byScore(Range.from(Range.Boundary.excluding(100), Range.Boundary.unbounded())));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$4\r\n" + "(100\r\n" + "$4\r\n" + "+inf\r\n" + "$7\r\n" + "BYSCORE\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZcountWithExclusiveInfiniteBoundaries() {
+
+        Command<String, String, ?> command = sut.zcount(MY_KEY,
+                Range.<Double> unbounded().gt(Double.NEGATIVE_INFINITY).lt(Double.POSITIVE_INFINITY));
+
+        assertThat(command.getArgs().toCommandString()).isEqualTo("key<hKey> (-inf (+inf");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByScoreRevWithExclusiveInfiniteBoundaries() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY,
+                ZRange.byScore(Range.<Double> unbounded().gt(Double.NEGATIVE_INFINITY).lt(Double.POSITIVE_INFINITY)).rev());
+
+        assertThat(command.getArgs().toCommandString()).isEqualTo("key<hKey> (+inf (-inf BYSCORE REV");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByLexWithLimit() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY, ZRange.byLex(Range.create("banana", "date")).limit(1, 2));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*8\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n" + "$7\r\n" + "[banana\r\n" + "$5\r\n" + "[date\r\n"
+                        + "$5\r\n" + "BYLEX\r\n" + "$5\r\n" + "LIMIT\r\n" + "$1\r\n" + "1\r\n" + "$1\r\n" + "2\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByLexRev() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY,
+                ZRange.byLex(Range.from(Range.Boundary.excluding("a"), Range.Boundary.unbounded())).rev());
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        // lexicographical boundaries are emitted max-first with REV
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$1\r\n" + "+\r\n" + "$2\r\n" + "(a\r\n" + "$5\r\n" + "BYLEX\r\n" + "$3\r\n" + "REV\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeWithScoresByScore() {
+
+        Command<String, String, ?> command = sut.zrangeWithScores(MY_KEY, ZRange.byScore(Range.create(200, 300)));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$3\r\n" + "200\r\n" + "$3\r\n" + "300\r\n" + "$7\r\n" + "BYSCORE\r\n" + "$10\r\n" + "WITHSCORES\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeWithScoresByIndexRev() {
+
+        Command<String, String, ?> command = sut.zrangeWithScores(MY_KEY, ZRange.byIndex(0, 1).rev());
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$1\r\n" + "0\r\n" + "$1\r\n" + "1\r\n" + "$3\r\n" + "REV\r\n" + "$10\r\n" + "WITHSCORES\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeStreaming() {
+
+        ValueStreamingChannel<String> channel = value -> {
+        };
+        Command<String, String, ?> command = sut.zrange(channel, MY_KEY, ZRange.byScore(Range.create(200, 400)).limit(0, 1));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*8\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n" + "$3\r\n" + "200\r\n" + "$3\r\n" + "400\r\n"
+                        + "$7\r\n" + "BYSCORE\r\n" + "$5\r\n" + "LIMIT\r\n" + "$1\r\n" + "0\r\n" + "$1\r\n" + "1\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeWithScoresStreaming() {
+
+        ScoredValueStreamingChannel<String> channel = value -> {
+        };
+        Command<String, String, ?> command = sut.zrangeWithScores(channel, MY_KEY, ZRange.byIndex(0, 1));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$1\r\n" + "0\r\n" + "$1\r\n" + "1\r\n" + "$10\r\n" + "WITHSCORES\r\n");
+    }
+
+    @Test
+    void zrangeShouldRejectNullArguments() {
+
+        ValueStreamingChannel<String> channel = value -> {
+        };
+
+        assertThatThrownBy(() -> sut.zrange(MY_KEY, (ZRange.ByIndex) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zrange(MY_KEY, (ZRange.ByScore) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zrange(MY_KEY, (ZRange.ByLex<String>) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zrange(null, ZRange.byIndex(0, 1))).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zrange(channel, MY_KEY, (ZRange.ByIndex) null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zrange((ValueStreamingChannel<String>) null, MY_KEY, ZRange.byIndex(0, 1)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void shouldCorrectlyConstructXpendingWithExclusiveRange() {
+
+        Command<String, String, ?> command = sut.xpending("stream",
+                XPendingArgs.Builder.xpending("group", Range.<String> unbounded().gt("1-0").lt("3-0"), Limit.from(10)));
+
+        assertThat(command.getArgs().toCommandString()).isEqualTo("key<stream> key<group> (1-0 (3-0 10");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXpendingWithExclusiveRangeAndIdle() {
+
+        Command<String, String, ?> command = sut.xpending("stream", XPendingArgs.Builder
+                .xpending(Consumer.from("group", "consumer"), Range.<String> unbounded().gt("1-0").lt("3-0"), Limit.from(1))
+                .idle(0));
+
+        assertThat(command.getArgs().toCommandString()).isEqualTo("key<stream> key<group> IDLE 0 (1-0 (3-0 1 key<consumer>");
+    }
+
+    @Test
     void shouldCorrectlyConstructXreadgroup() {
 
         Command<String, String, ?> command = sut.xreadgroup(Consumer.from("a", "b"), new XReadArgs(),
@@ -68,6 +389,54 @@ class RedisCommandBuilderUnitTests {
 
         assertThat(Unpooled.wrappedBuffer(command.getArgs().getFirstEncodedKey()).toString(StandardCharsets.UTF_8))
                 .isEqualTo("stream");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXreadWithMaxCountAndMaxSize() {
+
+        Command<String, String, ?> command = sut.xread(XReadArgs.Builder.count(50).maxCount(80).maxSize(65536).block(1000),
+                toStreamOffsets(XReadArgs.StreamOffset.from("s1", "0"), XReadArgs.StreamOffset.from("s2", "0")));
+
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*14\r\n" + "$5\r\n" + "XREAD\r\n" + "$5\r\n" + "BLOCK\r\n"
+                + "$4\r\n" + "1000\r\n" + "$5\r\n" + "COUNT\r\n" + "$2\r\n" + "50\r\n" + "$8\r\n" + "MAXCOUNT\r\n" + "$2\r\n"
+                + "80\r\n" + "$7\r\n" + "MAXSIZE\r\n" + "$5\r\n" + "65536\r\n" + "$7\r\n" + "STREAMS\r\n" + "$2\r\n" + "s1\r\n"
+                + "$2\r\n" + "s2\r\n" + "$1\r\n" + "0\r\n" + "$1\r\n" + "0\r\n");
+    }
+
+    @Test
+    void shouldOmitMaxCountAndMaxSizeWhenUnset() {
+
+        Command<String, String, ?> command = sut.xread(XReadArgs.Builder.count(50),
+                toStreamOffsets(XReadArgs.StreamOffset.from("s1", "0")));
+
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$5\r\n" + "XREAD\r\n" + "$5\r\n" + "COUNT\r\n"
+                + "$2\r\n" + "50\r\n" + "$7\r\n" + "STREAMS\r\n" + "$2\r\n" + "s1\r\n" + "$1\r\n" + "0\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXreadgroupWithMaxCountAndMaxSize() {
+
+        Command<String, String, ?> command = sut.xreadgroup(Consumer.from("group", "consumer"),
+                XReadArgs.Builder.maxCount(80).maxSize(65536), XReadArgs.StreamOffset.lastConsumed("s1"));
+
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*11\r\n" + "$10\r\n" + "XREADGROUP\r\n" + "$5\r\n" + "GROUP\r\n" + "$5\r\n" + "group\r\n" + "$8\r\n"
+                        + "consumer\r\n" + "$8\r\n" + "MAXCOUNT\r\n" + "$2\r\n" + "80\r\n" + "$7\r\n" + "MAXSIZE\r\n" + "$5\r\n"
+                        + "65536\r\n" + "$7\r\n" + "STREAMS\r\n" + "$2\r\n" + "s1\r\n" + "$1\r\n" + ">\r\n");
+    }
+
+    @SafeVarargs
+    private static XReadArgs.StreamOffset<String>[] toStreamOffsets(XReadArgs.StreamOffset<String>... streams) {
+        return streams;
     }
 
     @Test
@@ -234,6 +603,83 @@ class RedisCommandBuilderUnitTests {
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
                 "*8\r\n" + "$6\r\n" + "HGETEX\r\n" + "$4\r\n" + "hKey\r\n" + "$2\r\n" + "EX\r\n" + "$2\r\n" + "10\r\n"
                         + "$7\r\n" + "PERSIST\r\n" + "$6\r\n" + "FIELDS\r\n" + "$1\r\n" + "1\r\n" + "$3\r\n" + "one\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSunioncardTwoKeys() {
+
+        Command<String, String, ?> command = sut.sunioncard(MY_KEY, "hKey2");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*4\r\n" + "$10\r\n" + "SUNIONCARD\r\n" + "$1\r\n" + "2\r\n" + "$4\r\n" + "hKey\r\n" + "$5\r\n" + "hKey2\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSunioncardList() {
+
+        Command<String, String, ?> command = sut.sunioncard(Arrays.asList(MY_KEY, "hKey2", "hKey3"));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$10\r\n" + "SUNIONCARD\r\n" + "$1\r\n" + "3\r\n"
+                + "$4\r\n" + "hKey\r\n" + "$5\r\n" + "hKey2\r\n" + "$5\r\n" + "hKey3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSunioncardWithArgs() {
+
+        Command<String, String, ?> command = sut.sunioncard(MY_KEY, "hKey2", SUnionCardArgs.Builder.approx().limit(1000));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$10\r\n" + "SUNIONCARD\r\n" + "$1\r\n" + "2\r\n" + "$4\r\n" + "hKey\r\n" + "$5\r\n"
+                        + "hKey2\r\n" + "$6\r\n" + "APPROX\r\n" + "$5\r\n" + "LIMIT\r\n" + "$4\r\n" + "1000\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSdiffcardTwoKeys() {
+
+        Command<String, String, ?> command = sut.sdiffcard(MY_KEY, "hKey2");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*4\r\n" + "$9\r\n" + "SDIFFCARD\r\n" + "$1\r\n" + "2\r\n" + "$4\r\n" + "hKey\r\n" + "$5\r\n" + "hKey2\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSdiffcardList() {
+
+        Command<String, String, ?> command = sut.sdiffcard(Arrays.asList(MY_KEY, "hKey2", "hKey3"));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$9\r\n" + "SDIFFCARD\r\n" + "$1\r\n" + "3\r\n"
+                + "$4\r\n" + "hKey\r\n" + "$5\r\n" + "hKey2\r\n" + "$5\r\n" + "hKey3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSdiffcardWithArgs() {
+
+        Command<String, String, ?> command = sut.sdiffcard(MY_KEY, "hKey2", SDiffCardArgs.Builder.limit(100));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$9\r\n" + "SDIFFCARD\r\n" + "$1\r\n" + "2\r\n"
+                + "$4\r\n" + "hKey\r\n" + "$5\r\n" + "hKey2\r\n" + "$5\r\n" + "LIMIT\r\n" + "$3\r\n" + "100\r\n");
+    }
+
+    @Test
+    void shouldRejectSunioncardWithoutKeys() {
+        assertThatThrownBy(() -> sut.sunioncard(Collections.emptyList())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.sdiffcard(Collections.emptyList())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.sunioncard(Collections.emptyList(), SUnionCardArgs.Builder.approx()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.sdiffcard(Collections.emptyList(), SDiffCardArgs.Builder.limit(1)))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -486,6 +932,96 @@ class RedisCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructXnackSilent() {
+        Command<String, String, Long> command = sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.SILENT,
+                new String[] { MESSAGE_ID1, MESSAGE_ID2 });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*8\r\n" + "$5\r\n" + "XNACK\r\n" + "$11\r\n"
+                + "test-stream\r\n" + "$10\r\n" + "test-group\r\n" + "$6\r\n" + "SILENT\r\n" + "$3\r\n" + "IDS\r\n" + "$1\r\n"
+                + "2\r\n" + "$12\r\n" + "1234567890-0\r\n" + "$12\r\n" + "1234567891-0\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXnackFail() {
+        Command<String, String, Long> command = sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FAIL, new String[] { MESSAGE_ID1 });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$5\r\n" + "XNACK\r\n" + "$11\r\n" + "test-stream\r\n" + "$10\r\n" + "test-group\r\n"
+                        + "$4\r\n" + "FAIL\r\n" + "$3\r\n" + "IDS\r\n" + "$1\r\n" + "1\r\n" + "$12\r\n" + "1234567890-0\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXnackFatal() {
+        Command<String, String, Long> command = sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FATAL,
+                new String[] { MESSAGE_ID1 });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$5\r\n" + "XNACK\r\n" + "$11\r\n" + "test-stream\r\n" + "$10\r\n" + "test-group\r\n"
+                        + "$5\r\n" + "FATAL\r\n" + "$3\r\n" + "IDS\r\n" + "$1\r\n" + "1\r\n" + "$12\r\n" + "1234567890-0\r\n");
+    }
+
+    @Test
+    void xnackShouldRejectNullKey() {
+        assertThatThrownBy(() -> sut.xnack(null, GROUP_NAME, XNackMode.FAIL, new String[] { MESSAGE_ID1 }))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Key must not be null");
+    }
+
+    @Test
+    void xnackShouldRejectNullGroup() {
+        assertThatThrownBy(() -> sut.xnack(STREAM_KEY, null, XNackMode.FAIL, new String[] { MESSAGE_ID1 }))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Group must not be null");
+    }
+
+    @Test
+    void xnackShouldRejectNullMode() {
+        assertThatThrownBy(() -> sut.xnack(STREAM_KEY, GROUP_NAME, null, new String[] { MESSAGE_ID1 }))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("XNackMode must not be null");
+    }
+
+    @Test
+    void xnackShouldRejectEmptyMessageIds() {
+        assertThatThrownBy(() -> sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FAIL, new String[] {}))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("MessageIds must not be empty");
+    }
+
+    @Test
+    void xnackShouldRejectNullMessageIds() {
+        assertThatThrownBy(() -> sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FAIL, (String[]) null))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("MessageIds must not be empty");
+    }
+
+    @Test
+    void xnackShouldRejectNullElementsInMessageIds() {
+        assertThatThrownBy(
+                () -> sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FAIL, new String[] { MESSAGE_ID1, null, MESSAGE_ID2 }))
+                        .isInstanceOf(IllegalArgumentException.class)
+                        .hasMessageContaining("MessageIds must not contain null elements");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXnackSingleMessageId() {
+        Command<String, String, Long> command = sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FAIL, MESSAGE_ID1);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$5\r\n" + "XNACK\r\n" + "$11\r\n" + "test-stream\r\n" + "$10\r\n" + "test-group\r\n"
+                        + "$4\r\n" + "FAIL\r\n" + "$3\r\n" + "IDS\r\n" + "$1\r\n" + "1\r\n" + "$12\r\n" + "1234567890-0\r\n");
+    }
+
+    @Test
+    void xnackSingleMessageIdShouldRejectNullMessageId() {
+        assertThatThrownBy(() -> sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FAIL, (String) null))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("MessageId must not be null");
+    }
+
+    @Test
     void shouldCorrectlyConstructSetWithExAndIfeq() {
         Command<String, String, ?> command = sut.set("mykey", "myvalue",
                 SetArgs.Builder.ex(100).compareCondition(CompareCondition.valueEq("oldvalue")));
@@ -722,6 +1258,695 @@ class RedisCommandBuilderUnitTests {
         Command<String, String, Boolean> cmd = sut.msetex(map, a);
         String s = cmd.getArgs().toCommandString();
         assertThat(s).isEqualTo("2 key<k1> value<v1> key<k2> value<v2> KEEPTTL");
+    }
+
+    @Test
+    void shouldCorrectlyConstructClientNoTouch() {
+
+        Command<String, String, ?> command = sut.clientNoTouch(true);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*3\r\n" + "$6\r\n" + "CLIENT\r\n" + "$8\r\n" + "NO-TOUCH\r\n" + "$2\r\n" + "ON\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructClientNoTouchOff() {
+
+        Command<String, String, ?> command = sut.clientNoTouch(false);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*3\r\n" + "$6\r\n" + "CLIENT\r\n" + "$8\r\n" + "NO-TOUCH\r\n" + "$3\r\n" + "OFF\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructLmovem() {
+
+        Command<String, String, ?> command = sut.lmovem("source", "destination", LMovemArgs.Builder.leftRight());
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT RIGHT");
+    }
+
+    @Test
+    void shouldCorrectlyConstructLmovemWithCount() {
+
+        Command<String, String, ?> command = sut.lmovem("source", "destination",
+                LMovemArgs.Builder.leftLeft().count(2, LMovemArgs.Ordering.OBO));
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT LEFT COUNT 2 OBO");
+    }
+
+    @Test
+    void shouldCorrectlyConstructLmovemWithExactly() {
+
+        Command<String, String, ?> command = sut.lmovem("source", "destination",
+                LMovemArgs.Builder.rightLeft().exactly(3, LMovemArgs.Ordering.BULK));
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> RIGHT LEFT EXACTLY 3 BULK");
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlmovem() {
+
+        Command<String, String, ?> command = sut.blmovem("source", "destination",
+                BLMovemArgs.Builder.leftLeft().timeout(10L).exactly(3, LMovemArgs.Ordering.BULK));
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT LEFT 10 EXACTLY 3 BULK");
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlmovemWithDoubleTimeout() {
+
+        Command<String, String, ?> command = sut.blmovem("source", "destination", BLMovemArgs.Builder.leftRight().timeout(0.5));
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT RIGHT 0.5");
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlmovemWithoutTimeoutDefaultingToZero() {
+
+        Command<String, String, ?> command = sut.blmovem("source", "destination", BLMovemArgs.Builder.leftRight());
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT RIGHT 0");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZmove() {
+
+        Command<String, String, ?> command = sut.zmove("source", "destination",
+                ZMoveArgs.Builder.byScore(Range.create(1, 5)).count(2));
+
+        assertThat(command.getType()).isEqualTo(CommandType.ZMOVE);
+        assertThat(command.getArgs().toCommandString()).isEqualTo("key<source> key<destination> BYSCORE 1 5 COUNT 2");
+        assertThat(command.getOutput()).isInstanceOf(NullableScoredValueListOutput.class);
+    }
+
+    @Test
+    void shouldCorrectlyConstructBzmove() {
+
+        Command<String, String, ?> command = sut.bzmove("source", "destination", BZMoveArgs.Builder.max(0.5).count(3));
+
+        assertThat(command.getType()).isEqualTo(CommandType.BZMOVE);
+        assertThat(command.getArgs().toCommandString()).isEqualTo("key<source> key<destination> MAX 0.5 COUNT 3");
+        assertThat(command.getOutput()).isInstanceOf(NullableScoredValueListOutput.class);
+    }
+
+    /**
+     * None of the three commands is registered as read-only.
+     */
+    @Test
+    void sortedSetMoveCommandsAreNotReadOnly() {
+
+        assertThat(ReadOnlyCommands.isReadOnlyCommand(CommandType.ZMOVE)).isFalse();
+        assertThat(ReadOnlyCommands.isReadOnlyCommand(CommandType.BZMOVE)).isFalse();
+        assertThat(ReadOnlyCommands.isReadOnlyCommand(CommandType.ZMOVEMEMBER)).isFalse();
+    }
+
+    private static String encoded(Command<String, String, ?> command) {
+        ByteBuf buf = Unpooled.directBuffer();
+        try {
+            command.encode(buf);
+            return buf.toString(StandardCharsets.UTF_8);
+        } finally {
+            buf.release();
+        }
+    }
+
+    private static String resp(String... parts) {
+        StringBuilder sb = new StringBuilder("*").append(parts.length).append("\r\n");
+        for (String part : parts) {
+            sb.append('$').append(part.getBytes(StandardCharsets.UTF_8).length).append("\r\n").append(part).append("\r\n");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * The members follow {@code MEMBERS} and their number; a condition comes before {@code MEMBERS}.
+     */
+    @Test
+    void zmovememberWritesMembersAfterNumberAndConditionBefore() {
+
+        assertThat(encoded(sut.zmovemember("s", "d", new String[] { "a", "b" })))
+                .isEqualTo(resp("ZMOVEMEMBER", "s", "d", "MEMBERS", "2", "a", "b"));
+        assertThat(encoded(sut.zmovemember("s", "d", "a"))).isEqualTo(resp("ZMOVEMEMBER", "s", "d", "MEMBERS", "1", "a"));
+        assertThat(encoded(sut.zmovemember("s", "d", ZMoveMemberArgs.Builder.nx(), new String[] { "a", "b" })))
+                .isEqualTo(resp("ZMOVEMEMBER", "s", "d", "NX", "MEMBERS", "2", "a", "b"));
+        assertThat(encoded(sut.zmovemember("s", "d", ZMoveMemberArgs.Builder.xx(), "a")))
+                .isEqualTo(resp("ZMOVEMEMBER", "s", "d", "XX", "MEMBERS", "1", "a"));
+
+        assertThat(sut.zmovemember("s", "d", "a").getOutput()).isInstanceOf(NullableScoredValueOutput.class);
+        assertThat(sut.zmovemember("s", "d", ZMoveMemberArgs.Builder.nx(), "a").getOutput())
+                .isInstanceOf(NullableScoredValueOutput.class);
+        assertThat(sut.zmovemember("s", "d", new String[] { "a" }).getOutput())
+                .isInstanceOf(NullableScoredValueListOutput.class);
+    }
+
+    /**
+     * Members are data: keyword names, repeats and order are written as given, a member with a space stays one argument.
+     */
+    @Test
+    void zmovememberWritesMembersAsGiven() {
+
+        assertThat(encoded(sut.zmovemember("s", "d", new String[] { "NX", "XX", "MEMBERS", "COUNT" })))
+                .isEqualTo(resp("ZMOVEMEMBER", "s", "d", "MEMBERS", "4", "NX", "XX", "MEMBERS", "COUNT"));
+        assertThat(encoded(sut.zmovemember("s", "d", new String[] { "c", "a", "missing", "a" })))
+                .isEqualTo(resp("ZMOVEMEMBER", "s", "d", "MEMBERS", "4", "c", "a", "missing", "a"));
+        assertThat(encoded(sut.zmovemember("s", "d", "a b"))).isEqualTo(resp("ZMOVEMEMBER", "s", "d", "MEMBERS", "1", "a b"));
+    }
+
+    /**
+     * An empty member list is written as {@code MEMBERS 0}, with and without a condition, without an exception.
+     */
+    @Test
+    void zmovememberWritesEmptyMemberList() {
+
+        assertThat(encoded(sut.zmovemember("s", "d", new String[0]))).isEqualTo(resp("ZMOVEMEMBER", "s", "d", "MEMBERS", "0"));
+        assertThat(encoded(sut.zmovemember("s", "d", ZMoveMemberArgs.Builder.nx(), new String[0])))
+                .isEqualTo(resp("ZMOVEMEMBER", "s", "d", "NX", "MEMBERS", "0"));
+    }
+
+    /**
+     * An empty member list is sent, never rejected by the client.
+     */
+    @Test
+    void zmovememberEmptyMemberListIsSent() {
+
+        assertThat(encoded(sut.zmovemember("s", "d", ZMoveMemberArgs.Builder.xx(), new String[0])))
+                .isEqualTo(resp("ZMOVEMEMBER", "s", "d", "XX", "MEMBERS", "0"));
+    }
+
+    /**
+     * NX with XX can't be produced through the API, so the command never carries both conditions.
+     */
+    @Test
+    void zmovememberNeverCarriesBothConditions() {
+
+        assertThat(encoded(sut.zmovemember("s", "d", new ZMoveMemberArgs().nx().xx(), "a")))
+                .isEqualTo(resp("ZMOVEMEMBER", "s", "d", "XX", "MEMBERS", "1", "a"));
+        assertThat(encoded(sut.zmovemember("s", "d", new ZMoveMemberArgs().xx().nx(), new String[] { "a", "b" })))
+                .isEqualTo(resp("ZMOVEMEMBER", "s", "d", "NX", "MEMBERS", "2", "a", "b"));
+    }
+
+    /**
+     * {@code null} keys, args, member arrays and score ranges are rejected with {@link IllegalArgumentException} before a
+     * command is built.
+     */
+    @Test
+    void moveCommandsRejectNulls() {
+
+        assertThatThrownBy(() -> sut.zmove(null, "d", ZMoveArgs.Builder.min())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmove("s", null, ZMoveArgs.Builder.min())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmove("s", "d", null)).isInstanceOf(IllegalArgumentException.class);
+
+        assertThatThrownBy(() -> sut.bzmove(null, "d", BZMoveArgs.Builder.min(0L)))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.bzmove("s", null, BZMoveArgs.Builder.min(0L)))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.bzmove("s", "d", null)).isInstanceOf(IllegalArgumentException.class);
+
+        assertThatThrownBy(() -> sut.zmovemember(null, "d", new String[] { "a" })).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember("s", null, new String[] { "a" })).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember("s", "d", null, new String[] { "a" }))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember("s", "d", (String[]) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember("s", "d", ZMoveMemberArgs.Builder.nx(), (String[]) null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember("s", "d", (String) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember(null, "d", "a")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember("s", "d", null, "a")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember("s", "d", ZMoveMemberArgs.Builder.nx(), (String) null))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        assertThatThrownBy(() -> ZMoveArgs.Builder.byScore(null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
+     * An argument object passed in place of a member is rejected before a command is built.
+     */
+    @Test
+    void zmovememberRejectsArgumentObjectPassedAsMember() {
+
+        RedisCommandBuilder<String, Object> objectBuilder = new RedisCommandBuilder<>(OBJECT_VALUE_CODEC);
+
+        assertThatThrownBy(() -> objectBuilder.zmovemember("{z}s", "{z}d", (Object) ZMoveMemberArgs.Builder.nx()))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("ZMoveMemberArgs")
+                .hasMessageContaining("pass the arguments before the members");
+        assertThatThrownBy(() -> objectBuilder.zmovemember("{z}s", "{z}d", ZMoveMemberArgs.Builder.xx(),
+                (Object) new ZMoveMemberArgs().nx())).isInstanceOf(IllegalArgumentException.class)
+                        .hasMessageContaining("ZMoveMemberArgs");
+        assertThatThrownBy(() -> objectBuilder.zmovemember("{z}s", "{z}d", new Object[] { "a", ZMoveMemberArgs.Builder.nx() }))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("ZMoveMemberArgs");
+        assertThatThrownBy(() -> objectBuilder.zmovemember("{z}s", "{z}d", ZMoveMemberArgs.Builder.nx(),
+                new Object[] { ZMoveMemberArgs.Builder.xx() })).isInstanceOf(IllegalArgumentException.class)
+                        .hasMessageContaining("ZMoveMemberArgs");
+    }
+
+    /**
+     * Each command has its own type, with the source as the first key and the destination as the second.
+     */
+    @Test
+    void moveCommandsCarrySourceThenDestination() {
+
+        Command<String, String, ?> zmove = sut.zmove("src", "dst", ZMoveArgs.Builder.min());
+        Command<String, String, ?> bzmove = sut.bzmove("src", "dst", BZMoveArgs.Builder.min(0L));
+        Command<String, String, ?> zmovemember = sut.zmovemember("src", "dst", "a");
+
+        assertThat(zmove.getType()).isEqualTo(CommandType.ZMOVE);
+        assertThat(bzmove.getType()).isEqualTo(CommandType.BZMOVE);
+        assertThat(zmovemember.getType()).isEqualTo(CommandType.ZMOVEMEMBER);
+
+        for (Command<String, String, ?> command : Arrays.asList(zmove, bzmove, zmovemember)) {
+            assertThat(command.getArgs().getFirstEncodedKey()).isEqualTo(StandardCharsets.UTF_8.encode("src"));
+            assertThat(command.getArgs().toCommandString()).startsWith("key<src> key<dst> ");
+        }
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlessSet() {
+
+        Command<String, String, ?> command = sut.blessSet("key", BlessFlag.NO_EVICT);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*4\r\n" + "$5\r\n" + "BLESS\r\n" + "$3\r\n" + "SET\r\n" + "$3\r\n" + "key\r\n" + "$8\r\n" + "NO-EVICT\r\n");
+        assertThat(command.getOutput()).isInstanceOf(BooleanOutput.class);
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlessClear() {
+
+        Command<String, String, ?> command = sut.blessClear("key", BlessFlag.NO_EVICT);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*4\r\n" + "$5\r\n" + "BLESS\r\n" + "$5\r\n" + "CLEAR\r\n" + "$3\r\n" + "key\r\n" + "$8\r\n" + "NO-EVICT\r\n");
+        assertThat(command.getOutput()).isInstanceOf(BooleanOutput.class);
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlessGet() {
+
+        Command<String, String, ?> command = sut.blessGet("key");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*3\r\n" + "$5\r\n" + "BLESS\r\n" + "$3\r\n" + "GET\r\n" + "$3\r\n" + "key\r\n");
+        assertThat(command.getOutput()).isInstanceOf(BlessFlagListOutput.class);
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlessScan() {
+
+        Command<String, String, ?> command = sut.blessScan(BlessFlag.NO_EVICT);
+
+        assertThat(command.getType()).isEqualTo(CommandType.BLESS);
+        assertThat(command.getArgs().toCommandString()).isEqualTo("SCAN 0 NO-EVICT");
+        assertThat(command.getOutput()).isInstanceOf(KeyScanOutput.class);
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlessScanWithCount() {
+
+        Command<String, String, ?> command = sut.blessScan(BlessFlag.NO_EVICT, BlessScanArgs.Builder.count(10));
+
+        assertThat(command.getArgs().toCommandString()).isEqualTo("SCAN 0 NO-EVICT COUNT 10");
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlessScanWithCursor() {
+
+        Command<String, String, ?> command = sut.blessScan(ScanCursor.of("42"), BlessFlag.NO_EVICT);
+        assertThat(command.getArgs().toCommandString()).isEqualTo("SCAN 42 NO-EVICT");
+
+        command = sut.blessScan(ScanCursor.of("42"), BlessFlag.NO_EVICT, BlessScanArgs.Builder.count(7));
+        assertThat(command.getArgs().toCommandString()).isEqualTo("SCAN 42 NO-EVICT COUNT 7");
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlessScanWithCustomFlag() {
+
+        Command<String, String, ?> command = sut.blessScan(BlessFlag.of("FUTURE-FLAG"));
+
+        assertThat(command.getArgs().toCommandString()).isEqualTo("SCAN 0 FUTURE-FLAG");
+    }
+
+    @Test
+    void blessCommandsShouldRejectInvalidArguments() {
+
+        assertThatThrownBy(() -> sut.blessSet(null, BlessFlag.NO_EVICT)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.blessSet("key", null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.blessClear("key", null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.blessGet(null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.blessScan((BlessFlag) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.blessScan(null, BlessFlag.NO_EVICT)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.blessScan(ScanCursor.FINISHED, BlessFlag.NO_EVICT))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void geodistShouldRejectNullTo() {
+        assertThatThrownBy(() -> sut.geodist("key", "from", null, GeoArgs.Unit.m)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("To must not be null");
+    }
+
+    @Test
+    void geodistShouldRejectNullFrom() {
+        assertThatThrownBy(() -> sut.geodist("key", null, "to", GeoArgs.Unit.m)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("From must not be null");
+    }
+
+    // Set member expiration (Redis 8.12)
+
+    @Test
+    void shouldCorrectlyConstructSexpire() {
+
+        Command<String, String, ?> command = sut.sexpire(MY_KEY, 1, ExpireArgs.Builder.nx(), MY_FIELD1, MY_FIELD2, MY_FIELD3);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*9\r\n" + "$7\r\n" + "SEXPIRE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$1\r\n" + "1\r\n" + "$2\r\n" + "NX\r\n" + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n" + "3\r\n" + "$7\r\n"
+                + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSexpireWithoutArgs() {
+
+        Command<String, String, ?> command = sut.sexpire(MY_KEY, 1, null, MY_FIELD1);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$7\r\n" + "SEXPIRE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$1\r\n" + "1\r\n" + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n" + "1\r\n" + "$7\r\n" + "hField1\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSpexpire() {
+
+        Command<String, String, ?> command = sut.spexpire(MY_KEY, 1, ExpireArgs.Builder.gt(), MY_FIELD1);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$8\r\n" + "SPEXPIRE\r\n" + "$4\r\n" + "hKey\r\n" + "$1\r\n" + "1\r\n" + "$2\r\n"
+                        + "GT\r\n" + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n" + "1\r\n" + "$7\r\n" + "hField1\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSexpireat() {
+
+        Command<String, String, ?> command = sut.sexpireat(MY_KEY, 1, ExpireArgs.Builder.xx(), MY_FIELD1, MY_FIELD2);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*8\r\n" + "$9\r\n" + "SEXPIREAT\r\n" + "$4\r\n" + "hKey\r\n" + "$1\r\n" + "1\r\n" + "$2\r\n" + "XX\r\n"
+                        + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n" + "2\r\n" + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSpexpireat() {
+
+        Command<String, String, ?> command = sut.spexpireat(MY_KEY, 1, ExpireArgs.Builder.lt(), MY_FIELD1);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$10\r\n" + "SPEXPIREAT\r\n" + "$4\r\n" + "hKey\r\n" + "$1\r\n" + "1\r\n" + "$2\r\n"
+                        + "LT\r\n" + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n" + "1\r\n" + "$7\r\n" + "hField1\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSttl() {
+
+        Command<String, String, ?> command = sut.sttl(MY_KEY, MY_FIELD1, MY_FIELD2, MY_FIELD3);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$4\r\n" + "STTL\r\n" + "$4\r\n" + "hKey\r\n" + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n"
+                        + "3\r\n" + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSpttl() {
+
+        Command<String, String, ?> command = sut.spttl(MY_KEY, MY_FIELD1, MY_FIELD2, MY_FIELD3);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$5\r\n" + "SPTTL\r\n" + "$4\r\n" + "hKey\r\n" + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n"
+                        + "3\r\n" + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSexpiretime() {
+
+        Command<String, String, ?> command = sut.sexpiretime(MY_KEY, MY_FIELD1, MY_FIELD2, MY_FIELD3);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$11\r\n" + "SEXPIRETIME\r\n" + "$4\r\n" + "hKey\r\n" + "$7\r\n" + "MEMBERS\r\n"
+                        + "$1\r\n" + "3\r\n" + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSpexpiretime() {
+
+        Command<String, String, ?> command = sut.spexpiretime(MY_KEY, MY_FIELD1, MY_FIELD2, MY_FIELD3);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$12\r\n" + "SPEXPIRETIME\r\n" + "$4\r\n" + "hKey\r\n" + "$7\r\n" + "MEMBERS\r\n"
+                        + "$1\r\n" + "3\r\n" + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSpersist() {
+
+        Command<String, String, ?> command = sut.spersist(MY_KEY, MY_FIELD1, MY_FIELD2, MY_FIELD3);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$8\r\n" + "SPERSIST\r\n" + "$4\r\n" + "hKey\r\n" + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n"
+                        + "3\r\n" + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSaddex() {
+
+        Command<String, String, ?> command = sut.saddex(MY_KEY, MY_FIELD1);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$6\r\n" + "SADDEX\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n" + "1\r\n" + "$7\r\n" + "hField1\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSaddexWithArgs() {
+
+        Command<String, String, ?> command = sut.saddex(MY_KEY, SAddExArgs.Builder.ex(Duration.ofSeconds(10)).mnx(), MY_FIELD1);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*8\r\n" + "$6\r\n" + "SADDEX\r\n" + "$4\r\n" + "hKey\r\n" + "$3\r\n" + "MNX\r\n" + "$2\r\n" + "EX\r\n"
+                        + "$2\r\n" + "10\r\n" + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n" + "1\r\n" + "$7\r\n" + "hField1\r\n");
+    }
+
+    @Test
+    void shouldRejectMissingKeyOrMembersForSetMemberExpiration() {
+
+        assertThatThrownBy(() -> sut.sexpire(null, 1, null, MY_FIELD1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.sexpire(MY_KEY, 1, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.sexpire(MY_KEY, 1, null, (String[]) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.sttl(MY_KEY)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.spersist(MY_KEY)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.saddex(MY_KEY)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.saddex(MY_KEY, (SAddExArgs) null, MY_FIELD1)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void shouldRejectArgumentObjectPassedAsSingleSetMember() {
+
+        RedisCommandBuilder<String, Object> objectBuilder = new RedisCommandBuilder<>(OBJECT_VALUE_CODEC);
+
+        assertThatThrownBy(() -> objectBuilder.sexpire(MY_KEY, 1, null, (Object) ExpireArgs.Builder.nx()))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("ExpireArgs")
+                .hasMessageContaining("pass the arguments before the members");
+        assertThatThrownBy(() -> objectBuilder.sttl(MY_KEY, (Object) ExpireArgs.Builder.nx()))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("ExpireArgs");
+        assertThatThrownBy(() -> objectBuilder.saddex(MY_KEY, (Object) SAddExArgs.Builder.mnx()))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("SAddExArgs");
+
+        // the same guard on the varargs path, given a one-element array
+        assertThatThrownBy(() -> objectBuilder.sttl(MY_KEY, new Object[] { ExpireArgs.Builder.nx() }))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("ExpireArgs");
+        assertThatThrownBy(() -> objectBuilder.sexpire(MY_KEY, 1, null, new Object[] { ExpireArgs.Builder.nx() }))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("ExpireArgs");
+    }
+
+    @Test
+    void shouldEncodeSingleSetMemberWithoutAnArray() {
+
+        // single-member overloads resolve to the fixed-arity builder methods and encode the same bytes as a one-element varargs
+        // call
+        Command<String, String, ?> single = sut.sexpire(MY_KEY, 1, ExpireArgs.Builder.nx(), MY_FIELD1);
+        Command<String, String, ?> varargs = sut.sexpire(MY_KEY, 1, ExpireArgs.Builder.nx(), new String[] { MY_FIELD1 });
+        assertThat(encode(single)).isEqualTo(encode(varargs));
+
+        single = sut.spersist(MY_KEY, MY_FIELD1);
+        varargs = sut.spersist(MY_KEY, new String[] { MY_FIELD1 });
+        assertThat(encode(single)).isEqualTo(encode(varargs));
+
+        single = sut.saddex(MY_KEY, SAddExArgs.Builder.keepttl(), MY_FIELD1);
+        varargs = sut.saddex(MY_KEY, SAddExArgs.Builder.keepttl(), new String[] { MY_FIELD1 });
+        assertThat(encode(single)).isEqualTo(encode(varargs));
+
+        assertThatThrownBy(() -> sut.sexpire(null, 1, null, MY_FIELD1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.saddex(MY_KEY, (SAddExArgs) null, MY_FIELD1)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void shouldDecodeSingleSetMemberReplyAsLong() {
+
+        // the server replies with a one-element array; the single-member overloads surface the element itself
+        Command<String, String, Long> command = sut.sttl(MY_KEY, MY_FIELD1);
+        command.getOutput().multi(1);
+        command.getOutput().set(42L);
+        assertThat(command.getOutput().get()).isEqualTo(42L);
+
+        command = sut.sexpire(MY_KEY, 1, ExpireArgs.Builder.nx(), MY_FIELD1);
+        command.getOutput().multi(1);
+        command.getOutput().set(-2L);
+        assertThat(command.getOutput().get()).isEqualTo(-2L);
+    }
+
+    private static String encode(Command<String, String, ?> command) {
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+        return buf.toString(StandardCharsets.UTF_8);
+    }
+
+    @Test
+    void shouldEncodeSetMembersOfAnObjectValueCodec() {
+
+        RedisCommandBuilder<String, Object> objectBuilder = new RedisCommandBuilder<>(OBJECT_VALUE_CODEC);
+
+        Command<String, Object, ?> command = objectBuilder.sexpire(MY_KEY, 1, ExpireArgs.Builder.nx(), "m1");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$7\r\n" + "SEXPIRE\r\n" + "$4\r\n" + "hKey\r\n" + "$1\r\n" + "1\r\n" + "$2\r\n"
+                        + "NX\r\n" + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n" + "1\r\n" + "$2\r\n" + "m1\r\n");
+
+        command = objectBuilder.saddex(MY_KEY, "m1", "m2");
+        buf = Unpooled.directBuffer();
+        command.encode(buf);
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$6\r\n" + "SADDEX\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n" + "2\r\n" + "$2\r\n" + "m1\r\n" + "$2\r\n" + "m2\r\n");
+    }
+
+    /**
+     * A value codec whose value type is {@code Object}, as serialization codecs declare it; keys and values are UTF-8 strings.
+     */
+    private static final RedisCodec<String, Object> OBJECT_VALUE_CODEC = new RedisCodec<String, Object>() {
+
+        @Override
+        public String decodeKey(ByteBuffer bytes) {
+            return StringCodec.UTF8.decodeKey(bytes);
+        }
+
+        @Override
+        public Object decodeValue(ByteBuffer bytes) {
+            return StringCodec.UTF8.decodeValue(bytes);
+        }
+
+        @Override
+        public ByteBuffer encodeKey(String key) {
+            return StringCodec.UTF8.encodeKey(key);
+        }
+
+        @Override
+        public ByteBuffer encodeValue(Object value) {
+            return StringCodec.UTF8.encodeValue(String.valueOf(value));
+        }
+
+    };
+
+    /**
+     * The three-argument form sends {@code BITRANGEINTARRAY key start end}.
+     */
+    @Test
+    void shouldCorrectlyConstructBitrangeintarray() {
+
+        Command<String, String, ?> command = sut.bitrangeintarray("key", 0, -1);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$16\r\n" + "BITRANGEINTARRAY\r\n" + "$3\r\n"
+                + "key\r\n" + "$1\r\n" + "0\r\n" + "$2\r\n" + "-1\r\n");
+    }
+
+    /**
+     * The args form sends the range followed by the unit, {@code LIMIT count} and {@code ZEROS}.
+     */
+    @Test
+    void shouldCorrectlyConstructBitrangeintarrayWithArgs() {
+
+        Command<String, String, ?> command = sut.bitrangeintarray("key", 1, 2,
+                BitRangeIntArrayArgs.Builder.bit().limit(3).zeros());
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*8\r\n" + "$16\r\n" + "BITRANGEINTARRAY\r\n" + "$3\r\n" + "key\r\n" + "$1\r\n" + "1\r\n" + "$1\r\n" + "2\r\n"
+                        + "$3\r\n" + "BIT\r\n" + "$5\r\n" + "LIMIT\r\n" + "$1\r\n" + "3\r\n" + "$5\r\n" + "ZEROS\r\n");
+    }
+
+    /**
+     * A {@code null} key is rejected with {@link IllegalArgumentException}.
+     */
+    @Test
+    void bitrangeintarrayShouldRejectNullKey() {
+
+        assertThatThrownBy(() -> sut.bitrangeintarray(null, 0, -1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.bitrangeintarray(null, 0, -1, BitRangeIntArrayArgs.Builder.empty()))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
+     * {@code null} args are rejected with {@link IllegalArgumentException}.
+     */
+    @Test
+    void bitrangeintarrayShouldRejectNullArgs() {
+
+        assertThatThrownBy(() -> sut.bitrangeintarray("key", 0, -1, null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
+     * The extreme {@code long} values of the range are sent unchanged.
+     */
+    @Test
+    void bitrangeintarrayShouldSendExtremeRangeUnchanged() {
+
+        Command<String, String, ?> command = sut.bitrangeintarray("key", Long.MIN_VALUE, Long.MAX_VALUE);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$16\r\n" + "BITRANGEINTARRAY\r\n" + "$3\r\n"
+                + "key\r\n" + "$20\r\n" + "-9223372036854775808\r\n" + "$19\r\n" + "9223372036854775807\r\n");
     }
 
 }

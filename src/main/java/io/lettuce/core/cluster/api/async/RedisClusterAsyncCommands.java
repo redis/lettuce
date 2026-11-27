@@ -23,10 +23,11 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
+import io.lettuce.core.HotkeysArgs;
+import io.lettuce.core.HotkeysReply;
 import io.lettuce.core.MSetExArgs;
 import io.lettuce.core.Range;
 import io.lettuce.core.RedisFuture;
-import io.lettuce.core.SetArgs;
 import io.lettuce.core.api.async.*;
 import io.lettuce.core.json.JsonParser;
 
@@ -37,14 +38,18 @@ import io.lettuce.core.json.JsonParser;
  * @param <V> Value type.
  * @author Mark Paluch
  * @author dengliming
+ * @author Yordan Tsintsov
  * @since 4.0
  */
-public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<K, V>, RedisAclAsyncCommands<K, V>,
-        RedisFunctionAsyncCommands<K, V>, RedisGeoAsyncCommands<K, V>, RedisHashAsyncCommands<K, V>,
-        RedisHLLAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>, RedisListAsyncCommands<K, V>,
-        RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>,
-        RedisSortedSetAsyncCommands<K, V>, RedisStreamAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>,
-        RedisJsonAsyncCommands<K, V>, RedisVectorSetAsyncCommands<K, V>, RediSearchAsyncCommands<K, V> {
+public interface RedisClusterAsyncCommands<K, V>
+        extends BaseRedisAsyncCommands<K, V>, RedisAclAsyncCommands<K, V>, RedisFunctionAsyncCommands<K, V>,
+        RedisGeoAsyncCommands<K, V>, RedisHashAsyncCommands<K, V>, RedisHLLAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>,
+        RedisListAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>,
+        RedisSetAsyncCommands<K, V>, RedisSortedSetAsyncCommands<K, V>, RedisStreamAsyncCommands<K, V>,
+        RedisStringAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V>, RedisVectorSetAsyncCommands<K, V>,
+        RediSearchAsyncCommands<K>, RedisArrayAsyncCommands<K, V>, RedisBloomFilterAsyncCommands<K, V>,
+        RedisCuckooFilterAsyncCommands<K, V>, RedisTopKAsyncCommands<K, V>, RedisCMSAsyncCommands<K, V>,
+        RedisTDigestAsyncCommands<K, V>, RedisTimeSeriesAsyncCommands<K> {
 
     /**
      * Set the default timeout for operations. A zero timeout value indicates to not time out.
@@ -407,5 +412,54 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
      * @since 6.5
      */
     JsonParser getJsonParser();
+
+    /**
+     * HOTKEYS commands are not supported on the cluster client. Use node selection API or target specific nodes via
+     * {@code getConnection(nodeId)}.
+     *
+     * @param args the command args.
+     * @throws UnsupportedOperationException HOTKEYS is a node-specific command
+     */
+    @Override
+    default RedisFuture<String> hotkeysStart(HotkeysArgs args) {
+        throw new UnsupportedOperationException(
+                "HOTKEYS commands are not supported on cluster client. Use node selection API or target specific nodes.");
+    }
+
+    /**
+     * HOTKEYS commands are not supported on the cluster client. Use node selection API or target specific nodes via
+     * {@code getConnection(nodeId)}.
+     *
+     * @throws UnsupportedOperationException HOTKEYS is a node-specific command
+     */
+    @Override
+    default RedisFuture<String> hotkeysStop() {
+        throw new UnsupportedOperationException(
+                "HOTKEYS commands are not supported on cluster client. Use node selection API or target specific nodes.");
+    }
+
+    /**
+     * HOTKEYS commands are not supported on the cluster client. Use node selection API or target specific nodes via
+     * {@code getConnection(nodeId)}.
+     *
+     * @throws UnsupportedOperationException HOTKEYS is a node-specific command
+     */
+    @Override
+    default RedisFuture<String> hotkeysReset() {
+        throw new UnsupportedOperationException(
+                "HOTKEYS commands are not supported on cluster client. Use node selection API or target specific nodes.");
+    }
+
+    /**
+     * HOTKEYS commands are not supported on the cluster client. Use node selection API or target specific nodes via
+     * {@code getConnection(nodeId)}.
+     *
+     * @throws UnsupportedOperationException HOTKEYS is a node-specific command
+     */
+    @Override
+    default RedisFuture<HotkeysReply> hotkeysGet() {
+        throw new UnsupportedOperationException(
+                "HOTKEYS commands are not supported on cluster client. Use node selection API or target specific nodes.");
+    }
 
 }

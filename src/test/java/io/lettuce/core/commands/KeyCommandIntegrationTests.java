@@ -33,10 +33,11 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
-import org.junit.Ignore;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.core.BlessFlag;
+import io.lettuce.core.BlessScanArgs;
 import io.lettuce.core.CompareCondition;
 import io.lettuce.core.CopyArgs;
 import io.lettuce.core.ExpireArgs;
@@ -51,8 +52,8 @@ import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.ListStreamingAdapter;
+import io.lettuce.test.condition.DisabledOnProvider;
 import io.lettuce.test.condition.EnabledOnCommand;
-import io.lettuce.test.condition.RedisConditions;
 
 /**
  * Integration tests for {@link io.lettuce.core.api.sync.RedisKeyCommands}.
@@ -118,6 +119,8 @@ public class KeyCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("COPY")
+    // Redis Enterprise does not support multiple databases
+    @DisabledOnProvider("re")
     void copyWithDestinationDb() {
         redis.set(key, value);
         redis.copy(key, key, CopyArgs.Builder.destinationDb(2));
@@ -230,6 +233,8 @@ public class KeyCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    // Redis Enterprise does not support multiple databases and blocks MOVE
+    @DisabledOnProvider("re")
     public void move() {
         redis.set(key, value);
         redis.move(key, 1);
@@ -247,6 +252,8 @@ public class KeyCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    // Redis Enterprise does not expose maxmemory-policy via CONFIG GET/SET
+    @DisabledOnProvider("re")
     void objectFreq() {
         String maxmemoryPolicy = redis.configGet("maxmemory-policy").get("maxmemory-policy");
         try {
@@ -307,11 +314,14 @@ public class KeyCommandIntegrationTests extends TestSupport {
 
     @Test
     void pexpireat() {
-        Date expiration = new Date(System.currentTimeMillis() + 5000);
+        long expiryMillis = System.currentTimeMillis() + 5000;
+        Date expiration = new Date(expiryMillis);
         assertThat(redis.pexpireat(key, expiration)).isFalse();
         redis.set(key, value);
         assertThat(redis.pexpireat(key, expiration)).isTrue();
-        assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(5000);
+        long clockSkewToleranceMs = 50;
+        long upperBound = expiryMillis - System.currentTimeMillis() + clockSkewToleranceMs;
+        assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(upperBound);
 
         assertThat(redis.pexpireat(key, Instant.now().plusSeconds(15))).isTrue();
         assertThat(redis.ttl(key)).isBetween(10L, 20L);
@@ -404,10 +414,12 @@ public class KeyCommandIntegrationTests extends TestSupport {
         assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(1000);
 
         redis.del(key);
-        assertThat(redis.restore(key, bytes, RestoreArgs.Builder.ttl(System.currentTimeMillis() + 3000).replace().absttl()))
-                .isEqualTo("OK");
+        long expiryMillis = System.currentTimeMillis() + 5000;
+        assertThat(redis.restore(key, bytes, RestoreArgs.Builder.ttl(expiryMillis).replace().absttl())).isEqualTo("OK");
         assertThat(redis.get(key)).isEqualTo(value);
-        assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(3000);
+        long clockSkewToleranceMs = 50;
+        long upperBound = expiryMillis - System.currentTimeMillis() + clockSkewToleranceMs;
+        assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(upperBound);
     }
 
     @Test
@@ -600,7 +612,7 @@ public class KeyCommandIntegrationTests extends TestSupport {
         Set<String> expect = new HashSet<>();
         setup100KeyValues(expect);
 
-        KeyScanCursor<String> cursor = redis.scan(KeyScanArgs.Builder.limit(200).match("key1*"));
+        KeyScanCursor<String> cursor = redis.scan(KeyScanArgs.Builder.limit(200).match(key + "1*"));
 
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
@@ -701,6 +713,187 @@ public class KeyCommandIntegrationTests extends TestSupport {
         assertThat(redis.delex(k, CompareCondition.digestEq(digestX))).isEqualTo(0);
         assertThat(redis.delex(k, CompareCondition.digestEq(digestY))).isEqualTo(1);
         assertThat(redis.exists(k)).isEqualTo(0);
+    }
+
+    @Test
+    @EnabledOnCommand("BLESS")
+    void blessSet() {
+
+        redis.set(key, value);
+
+        assertThat(redis.blessSet(key, BlessFlag.NO_EVICT)).isTrue();
+        assertThat(redis.blessSet(key, BlessFlag.NO_EVICT)).isFalse();
+        assertThat(redis.blessGet(key)).containsExactly(BlessFlag.NO_EVICT);
+    }
+
+    @Test
+    @EnabledOnCommand("BLESS")
+    void blessClear() {
+
+        redis.set(key, value);
+        assertThat(redis.blessClear(key, BlessFlag.NO_EVICT)).isFalse();
+
+        redis.blessSet(key, BlessFlag.NO_EVICT);
+        assertThat(redis.blessClear(key, BlessFlag.NO_EVICT)).isTrue();
+        assertThat(redis.blessClear(key, BlessFlag.NO_EVICT)).isFalse();
+        assertThat(redis.blessGet(key)).isEmpty();
+    }
+
+    @Test
+    @EnabledOnCommand("BLESS")
+    void blessGetOnUnblessedKeyReturnsEmptyList() {
+
+        redis.set(key, value);
+
+        assertThat(redis.blessGet(key)).isEmpty();
+    }
+
+    @Test
+    @EnabledOnCommand("BLESS")
+    void blessSurvivesOverwriteAndIsRemovedWithKey() {
+
+        redis.set(key, value);
+        redis.blessSet(key, BlessFlag.NO_EVICT);
+
+        redis.set(key, "overwritten");
+        redis.append(key, "-again");
+        assertThat(redis.blessGet(key)).containsExactly(BlessFlag.NO_EVICT);
+
+        redis.del(key);
+        redis.set(key, value);
+        assertThat(redis.blessGet(key)).isEmpty();
+    }
+
+    @Test
+    @EnabledOnCommand("BLESS")
+    void blessAppliesToNonStringTypes() {
+
+        redis.hset(key, "field", value);
+
+        assertThat(redis.blessSet(key, BlessFlag.NO_EVICT)).isTrue();
+        assertThat(redis.blessGet(key)).containsExactly(BlessFlag.NO_EVICT);
+    }
+
+    @Test
+    @EnabledOnCommand("BLESS")
+    void blessIsKeptByCopyAndRenameButNotByRestore() {
+
+        redis.set(key, value);
+        redis.blessSet(key, BlessFlag.NO_EVICT);
+
+        redis.copy(key, key + "copy");
+        assertThat(redis.blessGet(key + "copy")).containsExactly(BlessFlag.NO_EVICT);
+
+        redis.rename(key + "copy", key + "renamed");
+        assertThat(redis.blessGet(key + "renamed")).containsExactly(BlessFlag.NO_EVICT);
+
+        byte[] dump = redis.dump(key);
+        redis.restore(key + "restored", 0, dump);
+        assertThat(redis.blessGet(key + "restored")).isEmpty();
+    }
+
+    @Test
+    @EnabledOnCommand("BLESS")
+    void blessOnMissingKeyFails() {
+
+        assertThatThrownBy(() -> redis.blessSet(key, BlessFlag.NO_EVICT)).isInstanceOf(RedisException.class)
+                .hasMessageContaining("no such key");
+        assertThatThrownBy(() -> redis.blessClear(key, BlessFlag.NO_EVICT)).isInstanceOf(RedisException.class)
+                .hasMessageContaining("no such key");
+        assertThatThrownBy(() -> redis.blessGet(key)).isInstanceOf(RedisException.class).hasMessageContaining("no such key");
+    }
+
+    @Test
+    @EnabledOnCommand("BLESS")
+    void blessUnknownFlagIsRejectedByServer() {
+
+        redis.set(key, value);
+
+        assertThatThrownBy(() -> redis.blessSet(key, BlessFlag.of("INRAM"))).isInstanceOf(RedisException.class)
+                .hasMessageContaining("syntax error");
+        assertThatThrownBy(() -> redis.blessScan(BlessFlag.of("NONE"))).isInstanceOf(RedisException.class)
+                .hasMessageContaining("syntax error");
+    }
+
+    @Test
+    @EnabledOnCommand("BLESS")
+    void blessScan() {
+
+        Set<String> expected = new HashSet<>();
+        for (int i = 0; i < 5; i++) {
+            redis.set(key + i, value);
+            redis.blessSet(key + i, BlessFlag.NO_EVICT);
+            expected.add(key + i);
+        }
+        redis.set("unblessed", value);
+
+        KeyScanCursor<String> cursor = redis.blessScan(BlessFlag.NO_EVICT);
+
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(cursor.getKeys()).containsExactlyInAnyOrderElementsOf(expected);
+    }
+
+    @Test
+    @EnabledOnCommand("BLESS")
+    void blessScanWithCountIteratesUntilFinished() {
+
+        Set<String> expected = new HashSet<>();
+        for (int i = 0; i < 10; i++) {
+            redis.set(key + i, value);
+            redis.blessSet(key + i, BlessFlag.NO_EVICT);
+            expected.add(key + i);
+        }
+        redis.set("unblessed", value);
+
+        Set<String> seen = new HashSet<>();
+        KeyScanCursor<String> cursor = redis.blessScan(BlessFlag.NO_EVICT, BlessScanArgs.Builder.count(2));
+        seen.addAll(cursor.getKeys());
+
+        while (!cursor.isFinished()) {
+            cursor = redis.blessScan(cursor, BlessFlag.NO_EVICT, BlessScanArgs.Builder.count(2));
+            seen.addAll(cursor.getKeys());
+        }
+
+        assertThat(seen).containsExactlyInAnyOrderElementsOf(expected);
+    }
+
+    @Test
+    @EnabledOnCommand("BLESS")
+    void blessScanInitialCursor() {
+
+        redis.set(key, value);
+        redis.blessSet(key, BlessFlag.NO_EVICT);
+
+        KeyScanCursor<String> cursor = redis.blessScan(ScanCursor.INITIAL, BlessFlag.NO_EVICT);
+
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(cursor.getKeys()).containsExactly(key);
+    }
+
+    @Test
+    @EnabledOnCommand("BLESS")
+    void blessScanEmptyIndex() {
+
+        redis.set(key, value);
+
+        KeyScanCursor<String> cursor = redis.blessScan(BlessFlag.NO_EVICT);
+
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(cursor.getKeys()).isEmpty();
+    }
+
+    @Test
+    @EnabledOnCommand("BLESS")
+    void blessScanFinishedCursor() {
+        assertThatThrownBy(() -> redis.blessScan(ScanCursor.FINISHED, BlessFlag.NO_EVICT))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @EnabledOnCommand("BLESS")
+    void blessScanNullCursor() {
+        assertThatThrownBy(() -> redis.blessScan(null, BlessFlag.NO_EVICT)).isInstanceOf(IllegalArgumentException.class);
     }
 
 }

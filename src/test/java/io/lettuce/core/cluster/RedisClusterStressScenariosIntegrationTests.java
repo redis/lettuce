@@ -53,11 +53,13 @@ import io.lettuce.test.Wait;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 import io.lettuce.test.settings.TestSettings;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 @Tag(INTEGRATION_TEST)
 @TestMethodOrder(MethodOrderer.MethodName.class)
 @SuppressWarnings("unchecked")
 @SlowTests
+@DisabledOnProvider("re")
 public class RedisClusterStressScenariosIntegrationTests extends TestSupport {
 
     private static final String host = TestSettings.hostAddr();

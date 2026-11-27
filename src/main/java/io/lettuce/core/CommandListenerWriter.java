@@ -45,7 +45,7 @@ import io.lettuce.core.resource.ClientResources;
  * @since 6.1
  */
 @SuppressWarnings("unchecked")
-public class CommandListenerWriter implements RedisChannelWriter {
+public class CommandListenerWriter implements RedisChannelWriter, Delegating<RedisChannelWriter> {
 
     private final RedisChannelWriter delegate;
 

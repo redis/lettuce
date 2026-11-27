@@ -65,8 +65,9 @@ class RedisVectorSetCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$4\r\n" + "VADD\r\n" + "$10\r\n"
-                + "vector:set\r\n" + "$3\r\n" + "0.1\r\n" + "$8\r\n" + "element1\r\n");
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*6\r\n" + "$4\r\n" + "VADD\r\n" + "$10\r\n" + "vector:set\r\n" + "$6\r\n" + "VALUES\r\n" + "$1\r\n"
+                        + "1\r\n" + "$3\r\n" + "0.1\r\n" + "$8\r\n" + "element1\r\n");
     }
 
     @Test
@@ -109,6 +110,16 @@ class RedisVectorSetCommandBuilderUnitTests {
 
         assertThat(buf.toString(StandardCharsets.UTF_8))
                 .isEqualTo("*2\r\n" + "$5\r\n" + "VCARD\r\n" + "$10\r\n" + "vector:set\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructVismember() {
+        Command<String, String, Boolean> command = builder.vismember(KEY, ELEMENT);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*3\r\n" + "$9\r\n" + "VISMEMBER\r\n" + "$10\r\n" + "vector:set\r\n" + "$8\r\n" + "element1\r\n");
     }
 
     @Test

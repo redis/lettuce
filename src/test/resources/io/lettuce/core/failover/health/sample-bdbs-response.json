@@ -1,0 +1,33 @@
+[
+  {
+    "endpoints": [{
+      "addr": ["10.0.0.1"],
+      "addr_type": "external",
+      "dns_name": "redis-11035.test.example.com",
+      "port": 11035,
+      "uid": "1:1"
+    }],
+    "uid": 1
+  },
+  {
+    "endpoints": [{
+      "addr": ["10.0.0.2"],
+      "addr_type": "external",
+      "dns_name": "redis-12001.test.example.com",
+      "port": 12001,
+      "uid": "3:1"
+    }],
+    "uid": 3
+  },
+  {
+    "endpoints": [{
+      "addr": ["10.0.0.3"],
+      "addr_type": "external",
+      "dns_name": "redis-12000.test.example.com",
+      "port": 12000,
+      "uid": "2:1"
+    }],
+    "uid": 2
+  }
+]
+

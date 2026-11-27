@@ -4,6 +4,7 @@ package io.lettuce.core.protocol;
  * Interface for protocol keywords providing an encoded representation.
  *
  * @author Mark Paluch
+ * @author Sharior Hossain Farhan
  */
 public interface ProtocolKeyword {
 
@@ -14,6 +15,8 @@ public interface ProtocolKeyword {
     byte[] getBytes();
 
     /**
+     * Return the command name, such as {@code GET}. Metrics and tracing use this name, so it must be the same for every
+     * instance of the same command.
      *
      * @return name of the command.
      */

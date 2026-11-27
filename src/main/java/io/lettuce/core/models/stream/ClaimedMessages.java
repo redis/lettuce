@@ -19,6 +19,7 @@
  */
 package io.lettuce.core.models.stream;
 
+import java.util.Collections;
 import java.util.List;
 
 import io.lettuce.core.StreamMessage;
@@ -35,16 +36,30 @@ public class ClaimedMessages<K, V> {
 
     private final List<StreamMessage<K, V>> messages;
 
+    private final List<String> deletedIds;
+
     /**
      * Create a new {@link ClaimedMessages}.
      *
-     * @param id
-     * @param messages
+     * @param id the stream ID to use as the cursor for the next {@code XAUTOCLAIM} call.
+     * @param messages the claimed messages.
      */
     public ClaimedMessages(String id, List<StreamMessage<K, V>> messages) {
+        this(id, messages, Collections.emptyList());
+    }
 
+    /**
+     * Create a new {@link ClaimedMessages} with deleted entry IDs.
+     *
+     * @param id the stream ID to use as the cursor for the next {@code XAUTOCLAIM} call.
+     * @param messages the claimed messages.
+     * @param deletedIds the IDs the server removed from the PEL, or {@code null} for an empty list.
+     * @since 7.8
+     */
+    public ClaimedMessages(String id, List<StreamMessage<K, V>> messages, List<String> deletedIds) {
         this.id = id;
         this.messages = messages;
+        this.deletedIds = deletedIds == null ? Collections.emptyList() : deletedIds;
     }
 
     public String getId() {
@@ -53,6 +68,19 @@ public class ClaimedMessages<K, V> {
 
     public List<StreamMessage<K, V>> getMessages() {
         return messages;
+    }
+
+    /**
+     * Returns the IDs of pending entries that were removed from the PEL because they no longer exist in the stream.
+     * <p>
+     * XAUTOCLAIM returns these IDs in a third reply element since Redis 7.0. Returns an empty list when the server responds
+     * with only two elements (Redis before 7.0).
+     *
+     * @return the IDs of PEL entries that were deleted from the stream, never {@code null}.
+     * @since 7.8
+     */
+    public List<String> getDeletedIds() {
+        return deletedIds;
     }
 
 }

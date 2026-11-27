@@ -10,29 +10,32 @@ import io.lettuce.core.annotations.Experimental;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Represents the results of an {@code FT.HYBRID} command. Contains total result count, execution time, warnings, and a list of
- * per-document results with document key and field values.
+ * results.
+ * <p>
+ * Each result carries its decoded document key and returned fields. Score information (text score, vector distance, combined
+ * score) is included when using {@code YIELD_SCORE_AS} in the query.
+ * </p>
  *
- * @param <K> Key type.
- * @param <V> Value type.
+ * @param <K> document key type
  * @author Aleksandar Todorov
  * @since 7.2
  */
 @Experimental
-public class HybridReply<K, V> {
+public class HybridReply<K> {
 
     private long totalResults;
 
     private double executionTime;
 
-    private final List<Result<K, V>> results;
+    private final List<HybridResult<K>> results;
 
-    private final List<V> warnings = new ArrayList<>();
+    private final List<String> warnings = new ArrayList<>();
 
     /**
      * Creates a new empty HybridReply instance.
@@ -78,7 +81,7 @@ public class HybridReply<K, V> {
     /**
      * @return an unmodifiable view of all results returned by the command
      */
-    public List<Result<K, V>> getResults() {
+    public List<HybridResult<K>> getResults() {
         return Collections.unmodifiableList(results);
     }
 
@@ -87,14 +90,14 @@ public class HybridReply<K, V> {
      *
      * @param result the result to add
      */
-    public void addResult(Result<K, V> result) {
+    public void addResult(HybridResult<K> result) {
         this.results.add(result);
     }
 
     /**
      * @return a read-only view of all warnings reported by the server
      */
-    public List<V> getWarnings() {
+    public List<String> getWarnings() {
         return Collections.unmodifiableList(warnings);
     }
 
@@ -103,7 +106,7 @@ public class HybridReply<K, V> {
      *
      * @param warning the warning to add
      */
-    public void addWarning(V warning) {
+    public void addWarning(String warning) {
         this.warnings.add(warning);
     }
 
@@ -122,35 +125,54 @@ public class HybridReply<K, V> {
     }
 
     /**
-     * Represents a single result entry in an {@code FT.HYBRID} response.
+     * Represents a single {@code FT.HYBRID} result entry.
      * <p>
-     * Each result contains field values returned by the query. The document key is available in the fields map under the
-     * reserved field name {@code __key} when returning individual documents. Score information (text score, vector distance,
-     * combined score) is included in the fields map when using {@code YIELD_SCORE_AS} in the query.
-     * </p>
+     * {@link #getFields()} maps each field name to a {@link FieldValue}, which retains the exact bytes returned by the server
+     * and can be read as either text ({@link FieldValue#asString()}) or binary ({@link FieldValue#asBytes()}). This lets a
+     * single result mix textual/numeric fields with binary fields such as vector embeddings loaded via {@code LOAD}, where
+     * UTF-8 decoding would corrupt the value.
+     *
+     * @param <K> document key type
+     * @since 7.8
      */
-    public static class Result<K, V> {
+    public static class HybridResult<K> {
 
-        private final Map<K, V> fields = new HashMap<>();
+        private K id;
 
-        public Result() {
-        }
-
-        /**
-         * @return a mutable map of all fields associated with this result
-         */
-        public Map<K, V> getFields() {
-            return fields;
-        }
+        private final Map<String, FieldValue> fields = new LinkedHashMap<>();
 
         /**
-         * Add a single field to this result.
+         * Get the decoded document key.
          *
-         * @param key field name
-         * @param value field value
+         * @return the document key, or {@code null} when the result does not represent an individual document
+         * @since 7.8
          */
-        public void addField(K key, V value) {
-            fields.put(key, value);
+        public K getId() {
+            return id;
+        }
+
+        void setId(K id) {
+            this.id = id;
+        }
+
+        /**
+         * Gets the result fields, mapping each field name to its {@link FieldValue}, in the order returned by the server. Read
+         * each value as text via {@link FieldValue#asString()} or as raw bytes via {@link FieldValue#asBytes()}.
+         *
+         * @return an unmodifiable, ordered map of field name to {@link FieldValue}, or an empty map if not available
+         */
+        public Map<String, FieldValue> getFields() {
+            return Collections.unmodifiableMap(fields);
+        }
+
+        /**
+         * Adds a single result field.
+         *
+         * @param key the field name
+         * @param value the raw field value
+         */
+        public void addField(String key, byte[] value) {
+            this.fields.put(key, value == null ? FieldValue.NULL : FieldValue.of(value));
         }
 
     }
