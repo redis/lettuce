@@ -183,6 +183,66 @@ public class SharedLockUnitTests {
     }
 
     @Test
+    public void incrementWritersSurvivesHolderDeath() throws Exception {
+        final SharedLock sharedLock = new SharedLock();
+
+        // Simulate the production wedge: a thread enters the guarded region inside incrementWriters and then dies
+        // before the guarded region's release runs. With a ReentrantLock + finally{ unlock(); }, a thread that dies
+        // before the finally block executes leaves the lock held forever. With a synchronized block, the JVM's
+        // implicit monitorexit releases the monitor as the frame unwinds.
+        //
+        // We reach into the private "monitor" field, hold it from a worker thread, and let that thread die. If the
+        // monitor really is a synchronized monitor, the next writer must proceed. If it were a ReentrantLock that
+        // was acquired and never released, the next writer would block forever.
+        Field monitorField = SharedLock.class.getDeclaredField("monitor");
+        monitorField.setAccessible(true);
+        final Object monitor = monitorField.get(sharedLock);
+
+        final CountDownLatch holderAcquired = new CountDownLatch(1);
+        final CountDownLatch releaseHolder = new CountDownLatch(1);
+
+        Thread holder = new Thread(() -> {
+            synchronized (monitor) {
+                holderAcquired.countDown();
+                try {
+                    releaseHolder.await();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }, "shared-lock-doomed-holder");
+        holder.setDaemon(true);
+        holder.start();
+
+        Assertions.assertTrue(holderAcquired.await(1, TimeUnit.SECONDS), "Holder should acquire the monitor");
+
+        // While the holder still owns the monitor, a writer from another thread must block.
+        final CountDownLatch writerEntered = new CountDownLatch(1);
+        Thread writer = new Thread(() -> {
+            sharedLock.incrementWriters();
+            try {
+                writerEntered.countDown();
+            } finally {
+                sharedLock.decrementWriters();
+            }
+        }, "shared-lock-writer");
+        writer.setDaemon(true);
+        writer.start();
+
+        Assertions.assertFalse(writerEntered.await(200, TimeUnit.MILLISECONDS),
+                "Writer must not proceed while monitor is held");
+
+        // Now let the holder finish. The JVM releases the monitor as the synchronized block unwinds — this is exactly
+        // the recovery path a leaked ReentrantLock would lack.
+        releaseHolder.countDown();
+        holder.join(TimeUnit.SECONDS.toMillis(1));
+        Assertions.assertFalse(holder.isAlive(), "Holder thread should have exited");
+
+        Assertions.assertTrue(writerEntered.await(1, TimeUnit.SECONDS),
+                "Writer must proceed after the holder thread releases the monitor");
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     public void singleThreadLocalEntryPerThread() throws Exception {
         // Access the static THREAD_WRITERS field
