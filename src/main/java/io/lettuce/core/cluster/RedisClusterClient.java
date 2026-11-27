@@ -29,8 +29,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -965,9 +967,42 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
+     * Reload partitions from the given nodes only, without discovering further nodes. Falls back to
+     * {@link #refreshPartitionsAsync()} if the nodes do not provide a topology.
+     */
+    private CompletionStage<Void> refreshPartitionsAsync(Collection<RedisURI> seeds) {
+
+        EventRecorder.RecordableEvent event = EventRecorder.getInstance()
+                .start(new TopologyRefreshEvent(new ArrayList<>(seeds)));
+        CompletableFuture<Void> result = new CompletableFuture<>();
+
+        fetchPartitions(seeds, false).thenAccept(this::usePartitions).whenComplete((unused, throwable) -> {
+
+            event.record();
+
+            if (throwable == null) {
+                result.complete(null);
+                return;
+            }
+
+            logger.debug("Cannot load the cluster topology from {}, using the regular refresh sources", seeds, throwable);
+            refreshPartitionsAsync().whenComplete((ignore, fallbackFailure) -> {
+                if (fallbackFailure != null) {
+                    result.completeExceptionally(fallbackFailure);
+                } else {
+                    result.complete(null);
+                }
+            });
+        });
+
+        return result;
+    }
+
+    /**
      * Apply the slot migrations of a {@code SMIGRATED} notification to the cluster topology. Slots migrating between known
-     * upstream nodes are moved without a topology refresh. Otherwise the topology is refreshed from the regular refresh
-     * sources. Must not run concurrently with another topology update.
+     * upstream nodes are moved without a topology refresh. Otherwise the topology is loaded from the destinations of the
+     * migrations, or from the regular refresh sources if there are none. Must not run concurrently with another topology
+     * update.
      *
      * @param migrations the migrations of the notification, may be empty
      * @return completes when the topology was updated or the refresh ended
@@ -975,7 +1010,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     CompletionStage<Void> applyTopologyUpdate(List<SlotMigration> migrations) {
 
         if (partitions == null || migrations.isEmpty()) {
-            // no topology to update yet, or nothing to move
+            // no topology to update yet, or no destination to load it from
             return refreshPartitionsAsync();
         }
 
@@ -983,7 +1018,7 @@ public class RedisClusterClient extends AbstractRedisClient {
             return CompletableFuture.completedFuture(null);
         }
 
-        return refreshPartitionsAsync();
+        return refreshPartitionsAsync(seeds(migrations));
     }
 
     /**
@@ -1053,6 +1088,27 @@ public class RedisClusterClient extends AbstractRedisClient {
         changed.forEach((node, slots) -> node.setSlots(slots.stream().boxed().collect(Collectors.toList())));
         partitions.updateCache();
         return true;
+    }
+
+    /**
+     * @return the destinations of the migrations, with the connection settings of the client
+     */
+    private Set<RedisURI> seeds(List<SlotMigration> migrations) {
+
+        Set<RedisURI> seeds = new LinkedHashSet<>();
+        Iterator<RedisURI> initial = initialUris.iterator();
+        RedisURI settings = initial.hasNext() ? initial.next() : null;
+
+        for (SlotMigration migration : migrations) {
+            HostAndPort destination = migration.getDestination();
+            RedisURI seed = RedisURI.create(destination.getHostText(), destination.getPort());
+            if (settings != null) {
+                RedisClusterURIUtil.applyUriConnectionSettings(settings, seed);
+            }
+            seeds.add(seed);
+        }
+
+        return seeds;
     }
 
     private static RedisClusterNode owner(Partitions partitions, Map<RedisClusterNode, BitSet> changed, int slot) {
@@ -1222,9 +1278,13 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     private CompletionStage<Partitions> fetchPartitions(Iterable<RedisURI> topologyRefreshSource) {
+        return fetchPartitions(topologyRefreshSource, useDynamicRefreshSources());
+    }
+
+    private CompletionStage<Partitions> fetchPartitions(Iterable<RedisURI> topologyRefreshSource, boolean discovery) {
 
         CompletionStage<Map<RedisURI, Partitions>> topology = refresh.loadViews(topologyRefreshSource,
-                getClusterClientOptions().getSocketOptions().getConnectTimeout(), useDynamicRefreshSources());
+                getClusterClientOptions().getSocketOptions().getConnectTimeout(), discovery);
 
         return topology.thenApply(partitions -> {
 

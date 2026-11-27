@@ -243,15 +243,45 @@ class RedisClusterClientUnitTests {
     }
 
     @Test
-    void topologyUpdateShouldRefreshFromRegularSourcesIfDestinationIsUnknown() {
+    void topologyUpdateShouldLoadTopologyFromUnknownDestination() {
+
+        CountingClusterClient clusterClient = clientWithMasters("10.0.0.1", 0, 99, "10.0.0.2", 100, 199);
+        clusterClient.topologyViews
+                .add(CompletableFuture.completedFuture(Collections.singletonMap(RedisURI.create("10.0.0.9", 6379),
+                        masters("10.0.0.1", 0, 9, "10.0.0.2", 100, 199, "10.0.0.9", 10, 99))));
+
+        try {
+            CompletionStage<Void> update = clusterClient
+                    .applyTopologyUpdate(migrations("10.0.0.1:6379", "10.0.0.9:6379", "10-99"));
+
+            assertThat(update.toCompletableFuture()).isCompleted();
+            assertThat(clusterClient.topologyLoads).hasSize(1);
+            TopologyLoad load = clusterClient.topologyLoads.get(0);
+            assertThat(load.discovery).isFalse();
+            assertThat(load.seeds).hasSize(1);
+            assertThat(load.seeds.get(0).getHost()).isEqualTo("10.0.0.9");
+            assertThat(load.seeds.get(0).getPort()).isEqualTo(6379);
+            assertThat(clusterClient.getPartitions()).hasSize(3);
+            assertThat(clusterClient.getPartitions().getMasterBySlot(10).getUri().getHost()).isEqualTo("10.0.0.9");
+        } finally {
+            FastShutdown.shutdown(clusterClient);
+        }
+    }
+
+    @Test
+    void topologyUpdateShouldFallBackToRegularRefreshIfDestinationCannotBeLoaded() {
 
         CountingClusterClient clusterClient = clientWithMasters("10.0.0.1", 0, 99, "10.0.0.2", 100, 199);
 
         try {
-            clusterClient.applyTopologyUpdate(migrations("10.0.0.1:6379", "10.0.0.9:6379", "10-19"));
+            CompletionStage<Void> update = clusterClient
+                    .applyTopologyUpdate(migrations("10.0.0.1:6379", "10.0.0.9:6379", "10-19"));
 
-            assertThat(clusterClient.topologyLoads).isNotEmpty();
-            assertThat(clusterClient.topologyLoads.get(0).discovery).isTrue();
+            assertThat(update.toCompletableFuture()).isCompletedExceptionally();
+            assertThat(clusterClient.topologyLoads.size()).isGreaterThan(1);
+            assertThat(clusterClient.topologyLoads.get(0).discovery).isFalse();
+            assertThat(clusterClient.topologyLoads.get(1).discovery).isTrue();
+            assertThat(clusterClient.topologyLoads.get(1).seeds).extracting(RedisURI::getHost).contains("10.0.0.1", "10.0.0.2");
             assertThat(clusterClient.getPartitions().getMasterBySlot(10).getUri().getHost()).isEqualTo("10.0.0.1");
         } finally {
             FastShutdown.shutdown(clusterClient);
