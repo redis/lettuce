@@ -1,17 +1,19 @@
 package io.lettuce.core.failover;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.failover.api.RedisCircuitBreakerException;
 import io.lettuce.core.protocol.CommandHandler;
-import io.lettuce.core.protocol.CompleteableCommand;
+import io.lettuce.core.protocol.CommandWrapper;
 import io.lettuce.core.protocol.RedisCommand;
 import io.netty.channel.Channel;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 
 /**
  * Tracks command results and records them to the circuit breaker.
@@ -86,6 +88,13 @@ class DatabaseCommandTracker {
             return command;
         }
 
+        @SuppressWarnings("unchecked")
+        CircuitBreakerAwareCommand<K, V, T> circuitBreakerAwareCommand = CommandWrapper.unwrap(command,
+                CircuitBreakerAwareCommand.class);
+        if (circuitBreakerAwareCommand == null) {
+            command = new CircuitBreakerAwareCommand<>(command, circuitBreaker.getGeneration());
+        }
+
         RedisCommand<K, V, T> result;
         try {
             // Delegate to parent
@@ -95,9 +104,6 @@ class DatabaseCommandTracker {
             throw e;
         }
 
-        CircuitBreakerGeneration generation = circuitBreaker.getGeneration();
-        // Attach completion callback to track success/failure
-        attachRecorder(generation, result);
         return result;
     }
 
@@ -109,36 +115,59 @@ class DatabaseCommandTracker {
             commands.forEach(c -> c.completeExceptionally(RedisCircuitBreakerException.INSTANCE));
             return (Collection) commands;
         }
+
+        Collection<RedisCommand<K, V, ?>> circuitBreakerAwareCommands = new ArrayList<>(commands.size());
+        for (RedisCommand<K, V, ?> command : commands) {
+            @SuppressWarnings("unchecked")
+            CircuitBreakerAwareCommand<K, V, ?> circuitBreakerAwareCommand = CommandWrapper.unwrap(command,
+                    CircuitBreakerAwareCommand.class);
+            if (circuitBreakerAwareCommand == null) {
+                command = new CircuitBreakerAwareCommand<>(command, circuitBreaker.getGeneration());
+            }
+            circuitBreakerAwareCommands.add(command);
+        }
+
+        commands = circuitBreakerAwareCommands;
+
         Collection<RedisCommand<K, V, ?>> result;
         try {
             // Delegate to parent
             result = commandWriter.writeMany(commands);
         } catch (Exception e) {
-            // TODO: here not sure we should record exception for each command or just once for the batch
-            circuitBreaker.getGeneration().recordResult(e);
+            commands.forEach(c -> circuitBreaker.getGeneration().recordResult(e));
             throw e;
         }
 
-        // Attach completion callbacks to track success/failure for each command
-        CircuitBreakerGeneration generation = circuitBreaker.getGeneration();
-        for (RedisCommand<K, V, ?> command : result) {
-            attachRecorder(generation, command);
-        }
         return result;
     }
 
-    private <K, V> void attachRecorder(CircuitBreakerGeneration generation, RedisCommand<K, V, ?> command) {
-        if (command instanceof CompleteableCommand) {
-            @SuppressWarnings("unchecked")
-            CompleteableCommand<Object> completeable = (CompleteableCommand<Object>) command;
-            completeable.onComplete((o, e) -> {
-                // Only record timeout exceptions
-                // Other exceptions are tracked inside the pipeline vioa MultiDbOutboundHandler
-                if (e instanceof RedisCommandTimeoutException) {
-                    generation.recordResult(e);
-                }
-            });
+    static class CircuitBreakerAwareCommand<K, V, T> extends CommandWrapper<K, V, T>
+            implements GenericFutureListener<Future<Void>> {
+
+        private final CircuitBreakerGeneration generation;
+
+        public CircuitBreakerAwareCommand(RedisCommand<K, V, T> command, CircuitBreakerGeneration generation) {
+            super(command);
+            this.generation = generation;
         }
+
+        @Override
+        protected void doBeforeComplete() {
+            generation.recordResult(null);
+        }
+
+        @Override
+        protected void doBeforeError(Throwable throwable) {
+            generation.recordResult(throwable);
+        }
+
+        @Override
+        public void operationComplete(Future<Void> future) throws Exception {
+            if (!future.isSuccess()) {
+                generation.recordResult(future.cause());
+            }
+        }
+
     }
 
 }
