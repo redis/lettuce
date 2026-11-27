@@ -22,15 +22,20 @@ package io.lettuce.core.cluster;
 import static io.lettuce.core.event.cluster.AdaptiveRefreshTriggeredEvent.*;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.event.cluster.AdaptiveRefreshTriggeredEvent;
+import io.lettuce.core.protocol.MaintenanceNotification.SlotMigration;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.ScheduledFuture;
@@ -64,14 +69,20 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
 
     private final EventExecutorGroup genericWorkerPool;
 
+    /**
+     * @param refreshTopology reloads the topology from the regular refresh sources
+     * @param applyTopologyUpdate applies the slot migrations of a maintenance notification to the topology
+     */
     ClusterTopologyRefreshScheduler(Supplier<ClusterClientOptions> clientOptions, Supplier<Partitions> partitions,
-            Supplier<CompletionStage<?>> refreshTopology, ClientResources clientResources) {
+            Supplier<CompletionStage<?>> refreshTopology, Function<List<SlotMigration>, CompletionStage<?>> applyTopologyUpdate,
+            ClientResources clientResources) {
 
         this.clientOptions = clientOptions;
         this.partitions = partitions;
         this.clientResources = clientResources;
         this.genericWorkerPool = this.clientResources.eventExecutorGroup();
-        this.clusterTopologyRefreshTask = new ClusterTopologyRefreshTask(refreshTopology);
+        this.clusterTopologyRefreshTask = new ClusterTopologyRefreshTask(refreshTopology, applyTopologyUpdate,
+                this::scheduleTopologyUpdate);
     }
 
     protected void activateTopologyRefreshIfNeeded() {
@@ -221,6 +232,39 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
         return scheduleRefresh();
     }
 
+    /**
+     * Request a topology update on behalf of a maintenance notification. Unlike adaptive refresh, the request is neither
+     * subject to the adaptive refresh triggers nor to the adaptive refresh timeout. Updates run one at a time in the order of
+     * their sequence ids, after a refresh in progress.
+     *
+     * @param seqId the sequence id of the notification
+     * @param migrations the slot migrations of the notification, may be empty
+     * @return {@code true} if the update was accepted
+     */
+    boolean requestTopologyUpdate(long seqId, List<SlotMigration> migrations) {
+
+        logger.debug("ClusterTopologyRefreshScheduler.requestTopologyUpdate({}, {})", seqId, migrations);
+
+        if (!isEventLoopActive()) {
+            logger.debug("ClusterTopologyRefresh is disabled");
+            return false;
+        }
+
+        clusterTopologyRefreshTask.addTopologyUpdate(seqId, migrations);
+        return scheduleTopologyUpdate();
+    }
+
+    private boolean scheduleTopologyUpdate() {
+
+        if (isEventLoopActive()) {
+            clientResources.eventExecutorGroup().submit(clusterTopologyRefreshTask.topologyUpdateRun);
+            return true;
+        }
+
+        logger.debug("ClusterTopologyRefresh is disabled");
+        return false;
+    }
+
     private boolean scheduleRefresh() {
 
         if (isEventLoopActive()) {
@@ -317,14 +361,45 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
 
         private final Supplier<CompletionStage<?>> reloadTopologyAsync;
 
-        ClusterTopologyRefreshTask(Supplier<CompletionStage<?>> reloadTopologyAsync) {
+        private final Function<List<SlotMigration>, CompletionStage<?>> applyTopologyUpdate;
+
+        private final Runnable scheduleTopologyUpdate;
+
+        final Runnable topologyUpdateRun = this::runTopologyUpdate;
+
+        // topology updates not yet run, by sequence id; guarded by itself
+        private final TreeMap<Long, List<SlotMigration>> pendingUpdates = new TreeMap<>();
+
+        ClusterTopologyRefreshTask(Supplier<CompletionStage<?>> reloadTopologyAsync,
+                Function<List<SlotMigration>, CompletionStage<?>> applyTopologyUpdate, Runnable scheduleTopologyUpdate) {
             this.reloadTopologyAsync = reloadTopologyAsync;
+            this.applyTopologyUpdate = applyTopologyUpdate;
+            this.scheduleTopologyUpdate = scheduleTopologyUpdate;
+        }
+
+        void addTopologyUpdate(long seqId, List<SlotMigration> migrations) {
+            synchronized (pendingUpdates) {
+                pendingUpdates.put(seqId, migrations);
+            }
+        }
+
+        private List<SlotMigration> pollTopologyUpdate() {
+            synchronized (pendingUpdates) {
+                Map.Entry<Long, List<SlotMigration>> first = pendingUpdates.pollFirstEntry();
+                return first != null ? first.getValue() : null;
+            }
+        }
+
+        private boolean hasPendingUpdates() {
+            synchronized (pendingUpdates) {
+                return !pendingUpdates.isEmpty();
+            }
         }
 
         public void run() {
 
             if (compareAndSet(false, true)) {
-                doRun();
+                doRun(reloadTopologyAsync);
                 return;
             }
 
@@ -333,23 +408,49 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
             }
         }
 
-        void doRun() {
+        private void runTopologyUpdate() {
+
+            if (!compareAndSet(false, true)) {
+                // scheduled again once the run in progress completes
+                return;
+            }
+
+            List<SlotMigration> migrations = pollTopologyUpdate();
+
+            if (migrations == null) {
+                complete();
+                return;
+            }
+
+            doRun(() -> applyTopologyUpdate.apply(migrations));
+        }
+
+        void doRun(Supplier<CompletionStage<?>> topologyUpdate) {
 
             if (logger.isDebugEnabled()) {
                 logger.debug("ClusterTopologyRefreshTask requesting partitions");
             }
             try {
-                reloadTopologyAsync.get().whenComplete((ignore, throwable) -> {
+                topologyUpdate.get().whenComplete((ignore, throwable) -> {
 
                     if (throwable != null) {
                         logger.warn("Cannot refresh Redis Cluster topology", throwable);
                     }
 
-                    set(false);
+                    complete();
                 });
             } catch (Exception e) {
                 logger.warn("Cannot refresh Redis Cluster topology", e);
-                set(false);
+                complete();
+            }
+        }
+
+        private void complete() {
+
+            set(false);
+
+            if (hasPendingUpdates()) {
+                scheduleTopologyUpdate.run();
             }
         }
 

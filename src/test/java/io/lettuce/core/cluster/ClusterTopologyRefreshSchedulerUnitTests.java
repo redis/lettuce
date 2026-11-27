@@ -6,6 +6,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +23,8 @@ import org.mockito.quality.Strictness;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.event.cluster.AdaptiveRefreshTriggeredEvent;
+import io.lettuce.core.protocol.MaintenanceNotification.SlotMigration;
+import io.lettuce.core.protocol.SlotMigrationNotifications;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.test.Delay;
 import io.netty.util.concurrent.EventExecutorGroup;
@@ -62,7 +66,7 @@ class ClusterTopologyRefreshSchedulerUnitTests {
         when(clientResources.eventExecutorGroup()).thenReturn(eventExecutors);
 
         sut = new ClusterTopologyRefreshScheduler(clusterClient::getClusterClientOptions, clusterClient::getPartitions,
-                clusterClient::refreshPartitionsAsync, clientResources);
+                clusterClient::refreshPartitionsAsync, clusterClient::applyTopologyUpdate, clientResources);
     }
 
     @Test
@@ -239,6 +243,156 @@ class ClusterTopologyRefreshSchedulerUnitTests {
         sut.onAskRedirection();
 
         verify(eventExecutors, times(2)).submit(any(Runnable.class));
+    }
+
+    @Test
+    void topologyUpdateShouldIgnoreAdaptiveRefreshTimeout() {
+
+        ClusterTopologyRefreshOptions adaptiveTimeout = ClusterTopologyRefreshOptions.builder().enablePeriodicRefresh(false)
+                .enableAllAdaptiveRefreshTriggers().adaptiveRefreshTriggersTimeout(1, TimeUnit.HOURS).build();
+
+        when(clusterClient.getClusterClientOptions())
+                .thenReturn(ClusterClientOptions.builder().topologyRefreshOptions(adaptiveTimeout).build());
+
+        sut.onMovedRedirection();
+        sut.onMovedRedirection();
+
+        assertThat(sut.requestTopologyUpdate(1, migrations())).isTrue();
+
+        verify(eventExecutors, times(2)).submit(any(Runnable.class));
+    }
+
+    @Test
+    void topologyUpdateShouldNotRequireAdaptiveTriggers() {
+
+        ClusterTopologyRefreshOptions noTriggers = ClusterTopologyRefreshOptions.builder().enablePeriodicRefresh(false).build();
+
+        when(clusterClient.getClusterClientOptions())
+                .thenReturn(ClusterClientOptions.builder().topologyRefreshOptions(noTriggers).build());
+
+        assertThat(sut.requestTopologyUpdate(1, migrations())).isTrue();
+
+        verify(eventExecutors).submit(any(Runnable.class));
+        verify(eventBus, never()).publish(any());
+    }
+
+    @Test
+    void topologyUpdateShouldNotSubmitIfExecutorIsShuttingDown() {
+
+        when(eventExecutors.isShuttingDown()).thenReturn(true);
+
+        assertThat(sut.requestTopologyUpdate(1, migrations())).isFalse();
+
+        verify(eventExecutors, never()).submit(any(Runnable.class));
+    }
+
+    @Test
+    void topologyUpdateShouldRunOnceWhenIdle() {
+
+        runSubmittedTasksImmediately();
+        List<SlotMigration> migrations = migrations();
+        when(clusterClient.applyTopologyUpdate(anyList())).thenReturn(CompletableFuture.completedFuture(null));
+
+        sut.requestTopologyUpdate(1, migrations);
+
+        verify(clusterClient).applyTopologyUpdate(migrations);
+        verify(clusterClient, never()).refreshPartitionsAsync();
+        assertThat(sut.isTopologyRefreshInProgress()).isFalse();
+    }
+
+    @Test
+    void topologyUpdateDuringRunningRefreshShouldRunAfterIt() {
+
+        when(clusterClient.getClusterClientOptions()).thenReturn(clusterClientOptions);
+        runSubmittedTasksImmediately();
+        List<SlotMigration> migrations = migrations();
+        CompletableFuture<Void> refresh = new CompletableFuture<>();
+        when(clusterClient.refreshPartitionsAsync()).thenReturn(refresh);
+        when(clusterClient.applyTopologyUpdate(anyList())).thenReturn(CompletableFuture.completedFuture(null));
+
+        sut.run();
+        sut.requestTopologyUpdate(1, migrations);
+
+        verify(clusterClient, never()).applyTopologyUpdate(anyList());
+
+        refresh.complete(null);
+
+        verify(clusterClient).applyTopologyUpdate(migrations);
+        verify(clusterClient).refreshPartitionsAsync();
+        assertThat(sut.isTopologyRefreshInProgress()).isFalse();
+    }
+
+    @Test
+    void topologyUpdatesShouldRunOneAtATimeInSeqIdOrder() {
+
+        when(clusterClient.getClusterClientOptions()).thenReturn(clusterClientOptions);
+        runSubmittedTasksImmediately();
+        List<SlotMigration> second = migrations();
+        List<SlotMigration> third = migrations();
+        CompletableFuture<Void> refresh = new CompletableFuture<>();
+        CompletableFuture<Void> secondUpdate = new CompletableFuture<>();
+        when(clusterClient.refreshPartitionsAsync()).thenReturn(refresh);
+        when(clusterClient.applyTopologyUpdate(second)).thenReturn(secondUpdate);
+        when(clusterClient.applyTopologyUpdate(third)).thenReturn(CompletableFuture.completedFuture(null));
+
+        sut.run();
+        sut.requestTopologyUpdate(3, third);
+        sut.requestTopologyUpdate(2, second);
+
+        refresh.complete(null);
+
+        verify(clusterClient).applyTopologyUpdate(second);
+        verify(clusterClient, never()).applyTopologyUpdate(third);
+
+        secondUpdate.complete(null);
+
+        verify(clusterClient).applyTopologyUpdate(third);
+        assertThat(sut.isTopologyRefreshInProgress()).isFalse();
+    }
+
+    @Test
+    void topologyUpdateShouldRunAfterFailedUpdate() {
+
+        runSubmittedTasksImmediately();
+        List<SlotMigration> first = migrations();
+        List<SlotMigration> second = migrations();
+        CompletableFuture<Void> failing = new CompletableFuture<>();
+        when(clusterClient.applyTopologyUpdate(first)).thenReturn(failing);
+        when(clusterClient.applyTopologyUpdate(second)).thenReturn(CompletableFuture.completedFuture(null));
+
+        sut.requestTopologyUpdate(1, first);
+        sut.requestTopologyUpdate(2, second);
+
+        failing.completeExceptionally(new IllegalStateException("boom"));
+
+        verify(clusterClient).applyTopologyUpdate(second);
+        assertThat(sut.isTopologyRefreshInProgress()).isFalse();
+    }
+
+    @Test
+    void adaptiveAndPeriodicRefreshShouldNotRunTopologyUpdates() {
+
+        when(clusterClient.getClusterClientOptions()).thenReturn(clusterClientOptions);
+        runSubmittedTasksImmediately();
+        when(clusterClient.refreshPartitionsAsync()).thenReturn(CompletableFuture.completedFuture(null));
+
+        sut.run();
+        sut.onMovedRedirection();
+
+        verify(clusterClient, atLeastOnce()).refreshPartitionsAsync();
+        verify(clusterClient, never()).applyTopologyUpdate(anyList());
+    }
+
+    private static List<SlotMigration> migrations() {
+        return SlotMigrationNotifications.smigrated(1, "10.0.0.1:6379", "10.0.0.2:6379", "0-9").getMigrations();
+    }
+
+    private void runSubmittedTasksImmediately() {
+
+        when(eventExecutors.submit(any(Runnable.class))).then(invocation -> {
+            ((Runnable) invocation.getArguments()[0]).run();
+            return null;
+        });
     }
 
     @Test

@@ -64,6 +64,7 @@ import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.CommandHandler;
 import io.lettuce.core.protocol.DefaultEndpoint;
+import io.lettuce.core.protocol.MaintenanceNotification.SlotMigration;
 import io.lettuce.core.protocol.PushHandler;
 import io.lettuce.core.pubsub.PubSubCommandHandler;
 import io.lettuce.core.pubsub.PubSubEndpoint;
@@ -161,7 +162,11 @@ public class RedisClusterClient extends AbstractRedisClient {
     private final ClusterTopologyRefresh refresh;
 
     private final ClusterTopologyRefreshScheduler topologyRefreshScheduler = new ClusterTopologyRefreshScheduler(
-            this::getClusterClientOptions, this::getPartitions, this::refreshPartitionsAsync, getResources());
+            this::getClusterClientOptions, this::getPartitions, this::refreshPartitionsAsync, this::applyTopologyUpdate,
+            getResources());
+
+    private final ClusterMaintenanceCoordinator maintenanceCoordinator = new ClusterMaintenanceCoordinator(
+            topologyRefreshScheduler::requestTopologyUpdate);
 
     private final Iterable<RedisURI> initialUris;
 
@@ -898,6 +903,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         connectionBuilder.connectionInitializer(createHandshake(state));
 
         connectionBuilder.reconnectionListener(new ReconnectEventListener(topologyRefreshScheduler));
+        connectionBuilder.maintenanceNotificationListener(maintenanceCoordinator);
         connectionBuilder.clientOptions(getClusterClientOptions());
         connectionBuilder.connection(connection);
         connectionBuilder.clientResources(getResources());
@@ -971,6 +977,17 @@ public class RedisClusterClient extends AbstractRedisClient {
                 getResources().eventBus().publish(topologyChangedEvent);
             }
         }).whenComplete((unused, throwable) -> event.record());
+    }
+
+    /**
+     * Update the cluster topology for the slot migrations of a {@code SMIGRATED} notification by refreshing it from the regular
+     * refresh sources. Must not run concurrently with another topology update.
+     *
+     * @param migrations the migrations of the notification, may be empty
+     * @return completes when the refresh ended
+     */
+    CompletionStage<Void> applyTopologyUpdate(List<SlotMigration> migrations) {
+        return refreshPartitionsAsync();
     }
 
     /**
