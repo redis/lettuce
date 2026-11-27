@@ -27,7 +27,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
@@ -82,6 +81,7 @@ import io.lettuce.core.cluster.event.AskRedirectionEvent;
 import io.lettuce.core.cluster.event.ClusterTopologyChangedEvent;
 import io.lettuce.core.cluster.event.MovedRedirectionEvent;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
+import io.lettuce.core.cluster.topology.ClusterTopologyRefresh;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.event.Event;
 import io.lettuce.core.event.cluster.AdaptiveRefreshTriggeredEvent;
@@ -1657,9 +1657,21 @@ public class SlotMigrationManualRunner {
         }
 
         @Override
-        protected CompletionStage<Void> refreshPartitionsAsync(Collection<RedisURI> seeds) {
-            emit(traceEvent("client").put("client", name).put("name", "seeded-refresh").put("detail", seeds.toString()));
-            return traced(super.refreshPartitionsAsync(seeds), System.nanoTime(), "seeds");
+        protected ClusterTopologyRefresh createTopologyRefresh() {
+
+            ClusterTopologyRefresh delegate = super.createTopologyRefresh();
+
+            return (seeds, connectTimeout, discovery) -> {
+
+                if (discovery) {
+                    return delegate.loadViews(seeds, connectTimeout, true);
+                }
+
+                // only the refresh from the destinations of a migration loads without discovery
+                emit(traceEvent("client").put("client", name).put("name", "seeded-refresh").put("detail",
+                        String.valueOf(seeds)));
+                return traced(delegate.loadViews(seeds, connectTimeout, false), System.nanoTime(), "seeds");
+            };
         }
 
         @Override
@@ -1667,7 +1679,7 @@ public class SlotMigrationManualRunner {
             return traced(super.refreshPartitionsAsync(), System.nanoTime(), "regular");
         }
 
-        private CompletionStage<Void> traced(CompletionStage<Void> refresh, long started, String sources) {
+        private <T> CompletionStage<T> traced(CompletionStage<T> refresh, long started, String sources) {
 
             if (smigratedAt >= 0) {
                 onRefresh.run();
