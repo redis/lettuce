@@ -55,6 +55,7 @@ import io.netty.util.concurrent.Future;
  *
  * @author Mark Paluch
  * @author Yohei Ueki
+ * @author Seunghwan Lee
  */
 @Tag(UNIT_TEST)
 class DefaultClientResourcesUnitTests {
@@ -285,6 +286,30 @@ class DefaultClientResourcesUnitTests {
 
         copyTimer.stop();
         timer.stop();
+    }
+
+    @Test
+    void mutationConsidersSharedCommandLatencyRecorder() {
+
+        CommandLatencyCollector latencyCollectorMock = mock(CommandLatencyCollector.class);
+        ClientResources clientResources = ClientResources.builder().commandLatencyRecorder(latencyCollectorMock).build();
+
+        ClientResources copy = clientResources.mutate().build();
+        FastShutdown.shutdown(copy);
+
+        verify(latencyCollectorMock, never()).shutdown();
+    }
+
+    @Test
+    void mutationConsidersOwnedCommandLatencyRecorder() {
+
+        EventLoopGroupProvider groupProviderMock = mock(EventLoopGroupProvider.class);
+        ClientResources clientResources = ClientResources.builder().eventLoopGroupProvider(groupProviderMock).build();
+
+        ClientResources copy = clientResources.mutate().build();
+        FastShutdown.shutdown(copy);
+
+        assertThat(copy).hasFieldOrPropertyWithValue("sharedCommandLatencyRecorder", false);
     }
 
     @Test
