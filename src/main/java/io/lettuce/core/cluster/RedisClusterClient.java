@@ -24,8 +24,10 @@ import java.net.SocketAddress;
 import java.net.URI;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +39,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -57,6 +60,7 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.event.jfr.EventRecorder;
 import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.Futures;
+import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceLists;
 import io.lettuce.core.json.JsonParser;
@@ -65,6 +69,7 @@ import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.CommandHandler;
 import io.lettuce.core.protocol.DefaultEndpoint;
 import io.lettuce.core.protocol.MaintenanceNotification.SlotMigration;
+import io.lettuce.core.protocol.MaintenanceNotification.SlotRange;
 import io.lettuce.core.protocol.PushHandler;
 import io.lettuce.core.pubsub.PubSubCommandHandler;
 import io.lettuce.core.pubsub.PubSubEndpoint;
@@ -956,38 +961,141 @@ public class RedisClusterClient extends AbstractRedisClient {
                     .whenComplete((unused, throwable) -> event.record());
         }
 
-        return loadPartitionsAsync().thenAccept(loadedPartitions -> {
-
-            ClusterTopologyChangedEvent topologyChangedEvent = null;
-
-            if (TopologyComparators.isChanged(getPartitions(), loadedPartitions)) {
-
-                logger.debug("Using a new cluster topology");
-
-                List<RedisClusterNode> before = new ArrayList<>(getPartitions());
-                List<RedisClusterNode> after = new ArrayList<>(loadedPartitions);
-
-                topologyChangedEvent = new ClusterTopologyChangedEvent(before, after);
-            }
-
-            this.partitions.reload(loadedPartitions.getPartitions());
-            updatePartitionsInConnections();
-
-            if (topologyChangedEvent != null) {
-                getResources().eventBus().publish(topologyChangedEvent);
-            }
-        }).whenComplete((unused, throwable) -> event.record());
+        return loadPartitionsAsync().thenAccept(this::usePartitions).whenComplete((unused, throwable) -> event.record());
     }
 
     /**
-     * Update the cluster topology for the slot migrations of a {@code SMIGRATED} notification by refreshing it from the regular
-     * refresh sources. Must not run concurrently with another topology update.
+     * Apply the slot migrations of a {@code SMIGRATED} notification to the cluster topology. Slots migrating between known
+     * upstream nodes are moved without a topology refresh. Otherwise the topology is refreshed from the regular refresh
+     * sources. Must not run concurrently with another topology update.
      *
      * @param migrations the migrations of the notification, may be empty
-     * @return completes when the refresh ended
+     * @return completes when the topology was updated or the refresh ended
      */
     CompletionStage<Void> applyTopologyUpdate(List<SlotMigration> migrations) {
+
+        if (partitions == null || migrations.isEmpty()) {
+            // no topology to update yet, or nothing to move
+            return refreshPartitionsAsync();
+        }
+
+        if (applySlotMigrations(migrations)) {
+            return CompletableFuture.completedFuture(null);
+        }
+
         return refreshPartitionsAsync();
+    }
+
+    /**
+     * Move migrated slots to their destination without a topology refresh. The slots are moved in a copy of the topology that
+     * is then applied like a refreshed topology. Nothing is changed unless every destination is a known upstream node and every
+     * listed slot is owned by its source or already by its destination. Nodes are neither added nor removed.
+     *
+     * @param migrations the migrations of a {@code SMIGRATED} notification
+     * @return {@code true} if the topology now reflects all migrations
+     */
+    boolean applySlotMigrations(List<SlotMigration> migrations) {
+
+        Partitions current = this.partitions;
+
+        if (current == null || migrations.isEmpty()) {
+            return false;
+        }
+
+        Partitions updated = current.clone();
+
+        if (!moveSlots(updated, migrations)) {
+            return false;
+        }
+
+        if (TopologyComparators.isChanged(current, updated)) {
+            usePartitions(updated);
+            logger.debug("Applied slot migrations {} to the cluster topology", migrations);
+        }
+
+        return true;
+    }
+
+    private static boolean moveSlots(Partitions partitions, List<SlotMigration> migrations) {
+
+        Map<RedisClusterNode, BitSet> changed = new HashMap<>();
+
+        for (SlotMigration migration : migrations) {
+
+            HostAndPort to = migration.getDestination();
+            HostAndPort from = migration.getSource();
+            RedisClusterNode destination = partitions.getPartition(to.getHostText(), to.getPort());
+            RedisClusterNode source = partitions.getPartition(from.getHostText(), from.getPort());
+
+            if (destination == null || !destination.is(RedisClusterNode.NodeFlag.UPSTREAM)) {
+                return false;
+            }
+
+            for (SlotRange range : migration.getSlots()) {
+                for (int slot = range.getFrom(); slot <= range.getTo(); slot++) {
+
+                    RedisClusterNode owner = owner(partitions, changed, slot);
+
+                    if (owner == destination) {
+                        continue;
+                    }
+
+                    if (owner == null || owner != source) {
+                        return false;
+                    }
+
+                    slots(changed, source).clear(slot);
+                    slots(changed, destination).set(slot);
+                }
+            }
+        }
+
+        changed.forEach((node, slots) -> node.setSlots(slots.stream().boxed().collect(Collectors.toList())));
+        partitions.updateCache();
+        return true;
+    }
+
+    private static RedisClusterNode owner(Partitions partitions, Map<RedisClusterNode, BitSet> changed, int slot) {
+
+        for (Map.Entry<RedisClusterNode, BitSet> entry : changed.entrySet()) {
+            if (entry.getValue().get(slot)) {
+                return entry.getKey();
+            }
+        }
+
+        RedisClusterNode owner = partitions.getMasterBySlot(slot);
+        return owner != null && changed.containsKey(owner) ? null : owner;
+    }
+
+    private static BitSet slots(Map<RedisClusterNode, BitSet> changed, RedisClusterNode node) {
+
+        return changed.computeIfAbsent(node, n -> {
+            BitSet slots = new BitSet(SlotHash.SLOT_COUNT);
+            n.forEachSlot(slots::set);
+            return slots;
+        });
+    }
+
+    private void usePartitions(Partitions loadedPartitions) {
+
+        ClusterTopologyChangedEvent topologyChangedEvent = null;
+
+        if (TopologyComparators.isChanged(getPartitions(), loadedPartitions)) {
+
+            logger.debug("Using a new cluster topology");
+
+            List<RedisClusterNode> before = new ArrayList<>(getPartitions());
+            List<RedisClusterNode> after = new ArrayList<>(loadedPartitions);
+
+            topologyChangedEvent = new ClusterTopologyChangedEvent(before, after);
+        }
+
+        this.partitions.reload(loadedPartitions.getPartitions());
+        updatePartitionsInConnections();
+
+        if (topologyChangedEvent != null) {
+            getResources().eventBus().publish(topologyChangedEvent);
+        }
     }
 
     /**
