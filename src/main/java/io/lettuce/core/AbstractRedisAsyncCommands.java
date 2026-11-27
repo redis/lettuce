@@ -1403,18 +1403,18 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<Set<V>> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate) {
+    public RedisFuture<Set<V>> geosearch(K key, GeoSearch.GeoRef<V> reference, GeoSearch.GeoPredicate predicate) {
         return dispatch(commandBuilder.geosearch(key, reference, predicate));
     }
 
     @Override
-    public RedisFuture<List<GeoWithin<V>>> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
+    public RedisFuture<List<GeoWithin<V>>> geosearch(K key, GeoSearch.GeoRef<V> reference, GeoSearch.GeoPredicate predicate,
             GeoArgs geoArgs) {
         return dispatch(commandBuilder.geosearch(key, reference, predicate, geoArgs));
     }
 
     @Override
-    public RedisFuture<Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<K> reference,
+    public RedisFuture<Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<V> reference,
             GeoSearch.GeoPredicate predicate, GeoArgs geoArgs, boolean storeDist) {
         return dispatch(commandBuilder.geosearchstore(destination, key, reference, predicate, geoArgs, storeDist));
     }

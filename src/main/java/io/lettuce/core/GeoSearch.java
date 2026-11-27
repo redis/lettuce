@@ -7,18 +7,21 @@ import io.lettuce.core.protocol.CommandArgs;
  * Utility to create {@link GeoPredicate} and {@link GeoRef} objects to be used with {@code GEOSEARCH}.
  *
  * @author Mark Paluch
+ * @author Taewoong Kim
  * @since 6.1
  */
 public final class GeoSearch {
 
-    // TODO: Should be V
     /**
      * Create a {@link GeoRef} from a Geo set {@code member}.
      *
+     * The member is encoded using the value codec.
+     *
+     * @param <V> Value type.
      * @param member the Geo set member to use as search reference starting point.
      * @return the {@link GeoRef}.
      */
-    public static <K> GeoRef<K> fromMember(K member) {
+    public static <V> GeoRef<V> fromMember(V member) {
         LettuceAssert.notNull(member, "Reference member must not be null");
         return new FromMember<>(member);
     }
@@ -26,12 +29,13 @@ public final class GeoSearch {
     /**
      * Create a {@link GeoRef} from WGS84 coordinates {@code longitude} and {@code latitude}.
      *
+     * @param <V> Value type.
      * @param longitude the longitude coordinate according to WGS84.
      * @param latitude the latitude coordinate according to WGS84.
      * @return the {@link GeoRef}.
      */
-    public static <K> GeoRef<K> fromCoordinates(double longitude, double latitude) {
-        return (GeoRef<K>) new FromCoordinates(longitude, latitude);
+    public static <V> GeoRef<V> fromCoordinates(double longitude, double latitude) {
+        return (GeoRef<V>) new FromCoordinates(longitude, latitude);
     }
 
     /**
@@ -60,24 +64,24 @@ public final class GeoSearch {
     /**
      * Geo reference specifying a search starting point.
      *
-     * @param <K>
+     * @param <V> Value type.
      */
-    public interface GeoRef<K> extends CompositeArgument {
+    public interface GeoRef<V> extends CompositeArgument {
 
     }
 
-    static class FromMember<K> implements GeoRef<K> {
+    static class FromMember<V> implements GeoRef<V> {
 
-        final K member;
+        final V member;
 
-        public FromMember(K member) {
+        public FromMember(V member) {
             this.member = member;
         }
 
         @Override
         @SuppressWarnings("unchecked")
         public <K, V> void build(CommandArgs<K, V> args) {
-            args.add("FROMMEMBER").addKey((K) member);
+            args.add("FROMMEMBER").addValue((V) member);
         }
 
     }

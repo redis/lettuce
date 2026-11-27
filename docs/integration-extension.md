@@ -32,6 +32,9 @@ Lettuce ships with predefined codecs:
 Publish/Subscribe connections use channel names and patterns for keys;
 messages are treated as values.
 
+Geo members, including `GeoSearch.fromMember(...)` references, use the value
+codec. Use `GeoRef<V>` for references passed to `geosearch` and `geosearchstore`.
+
 Keys and values can be encoded independently from each other which means
 the key can be a `java.lang.String` while the value is a `byte[]`. Many
 other constellations are possible like:

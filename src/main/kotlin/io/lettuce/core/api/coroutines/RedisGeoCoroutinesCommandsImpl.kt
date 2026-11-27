@@ -33,6 +33,7 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  *
  * @author Mikhael Sokolov
  * @author Mark Paluch
+ * @author Taewoong Kim
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
@@ -80,9 +81,9 @@ internal class RedisGeoCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
     override fun geohash(key: K, vararg members: V): Flow<Value<String>> =
         ops.geohash(key, *members).asFlow()
 
-    override fun geosearch(key: K, reference: GeoSearch.GeoRef<K>, predicate: GeoSearch.GeoPredicate): Flow<V> = ops.geosearch(key, reference, predicate).asFlow()
+    override fun geosearch(key: K, reference: GeoSearch.GeoRef<V>, predicate: GeoSearch.GeoPredicate): Flow<V> = ops.geosearch(key, reference, predicate).asFlow()
 
-    override fun geosearch(key: K, reference: GeoSearch.GeoRef<K>, predicate: GeoSearch.GeoPredicate, geoArgs: GeoArgs): Flow<GeoWithin<V>>  = ops.geosearch(key, reference, predicate, geoArgs).asFlow()
+    override fun geosearch(key: K, reference: GeoSearch.GeoRef<V>, predicate: GeoSearch.GeoPredicate, geoArgs: GeoArgs): Flow<GeoWithin<V>>  = ops.geosearch(key, reference, predicate, geoArgs).asFlow()
 
-    override suspend fun geosearchstore(destination: K, key: K, reference: GeoSearch.GeoRef<K>, predicate: GeoSearch.GeoPredicate, geoArgs: GeoArgs, storeDist: Boolean): Long? = ops.geosearchstore(destination, key, reference, predicate, geoArgs, storeDist).awaitFirstOrNull()
+    override suspend fun geosearchstore(destination: K, key: K, reference: GeoSearch.GeoRef<V>, predicate: GeoSearch.GeoPredicate, geoArgs: GeoArgs, storeDist: Boolean): Long? = ops.geosearchstore(destination, key, reference, predicate, geoArgs, storeDist).awaitFirstOrNull()
 }
