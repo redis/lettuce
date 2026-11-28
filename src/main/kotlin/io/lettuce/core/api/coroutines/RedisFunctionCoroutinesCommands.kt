@@ -1,7 +1,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.FlushMode
 import io.lettuce.core.FunctionRestoreMode
 import io.lettuce.core.ScriptOutputType
@@ -15,7 +14,6 @@ import io.lettuce.core.ScriptOutputType
  * @author Mark Paluch
  * @since 6.3
  */
-@ExperimentalLettuceCoroutinesApi
 interface RedisFunctionCoroutinesCommands<K : Any, V : Any> {
 
     /**

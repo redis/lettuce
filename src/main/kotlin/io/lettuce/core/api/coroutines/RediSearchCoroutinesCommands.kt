@@ -7,7 +7,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.annotations.Experimental
 import io.lettuce.core.search.AggregationReply
 import io.lettuce.core.search.SearchReply
@@ -42,7 +41,6 @@ import io.lettuce.core.search.arguments.hybrid.HybridArgs
  * @see <a href="https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/search/">RediSearch</a>
  * @since 6.8
  */
-@ExperimentalLettuceCoroutinesApi
 interface RediSearchCoroutinesCommands<K : Any> {
 
     /**

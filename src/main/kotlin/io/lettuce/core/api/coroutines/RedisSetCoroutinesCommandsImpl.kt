@@ -20,7 +20,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.ExpireArgs
 import io.lettuce.core.SAddExArgs
 import io.lettuce.core.SDiffCardArgs
@@ -48,7 +47,6 @@ import java.util.Date
  * @since 6.0
  *
  */
-@ExperimentalLettuceCoroutinesApi
 internal class RedisSetCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisSetReactiveCommands<K, V>) : RedisSetCoroutinesCommands<K, V> {
 
     override suspend fun sadd(key: K, vararg members: V): Long? = ops.sadd(key, *members).awaitFirstOrNull()

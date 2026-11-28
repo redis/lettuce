@@ -6,7 +6,6 @@
  */
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.probabilistic.IncrementPair
 import io.lettuce.core.api.reactive.RedisTopKReactiveCommands
 import io.lettuce.core.probabilistic.TopKListValue
@@ -24,7 +23,6 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @author Yordan Tsintsov
  * @since 7.7
  */
-@ExperimentalLettuceCoroutinesApi
 internal class RedisTopKCoroutinesCommandsImpl<K : Any, V : Any>(
     internal val ops: RedisTopKReactiveCommands<K, V>
 ) : RedisTopKCoroutinesCommands<K, V> {

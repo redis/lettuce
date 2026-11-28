@@ -34,7 +34,6 @@ import java.util.*
  * @author Mikhael Sokolov
  * @since 6.0
  */
-@ExperimentalLettuceCoroutinesApi
 interface RedisServerCoroutinesCommands<K : Any, V : Any> {
 
     /**

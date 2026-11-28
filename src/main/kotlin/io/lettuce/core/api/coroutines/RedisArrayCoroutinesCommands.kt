@@ -7,7 +7,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.annotations.Experimental
 import io.lettuce.core.array.*
 
@@ -23,7 +22,6 @@ import io.lettuce.core.array.*
  * @see <a href="https://redis.io/docs/latest/develop/data-types/arrays/">Redis Arrays</a>
  * @since 7.6
  */
-@ExperimentalLettuceCoroutinesApi
 interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
 
     /**

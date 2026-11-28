@@ -40,7 +40,6 @@ import java.util.*
  * @since 6.0
  *
  */
-@ExperimentalLettuceCoroutinesApi
 internal class RedisServerCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisServerReactiveCommands<K, V>) : RedisServerCoroutinesCommands<K, V> {
 
     override suspend fun bgrewriteaof(): String? = ops.bgrewriteaof().awaitFirstOrNull()

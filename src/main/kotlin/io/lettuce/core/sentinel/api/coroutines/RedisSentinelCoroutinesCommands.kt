@@ -21,7 +21,6 @@
 package io.lettuce.core.sentinel.api.coroutines
 
 import io.lettuce.core.ClientListArgs
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.KillArgs
 import io.lettuce.core.output.CommandOutput
 import io.lettuce.core.protocol.CommandArgs
@@ -37,7 +36,6 @@ import java.net.SocketAddress
  * @author Mikhael Sokolov
  * @since 6.0
  */
-@ExperimentalLettuceCoroutinesApi
 interface RedisSentinelCoroutinesCommands<K : Any, V : Any> {
 
     /**

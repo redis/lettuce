@@ -19,7 +19,6 @@
  */
 package io.lettuce.core.api.async
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.TransactionResult
 import kotlinx.coroutines.future.await
 
@@ -29,7 +28,6 @@ import kotlinx.coroutines.future.await
  * @author Mikhael Sokolov
  * @since 6.0
  */
-@ExperimentalLettuceCoroutinesApi
 suspend inline fun <K, V> RedisAsyncCommands<K, V>.multi(action: RedisAsyncCommands<K, V>.() -> Unit): TransactionResult = try {
     multi().await()
     action.invoke(this)

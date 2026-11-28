@@ -7,7 +7,6 @@
 package io.lettuce.core.timeseries
 
 import io.lettuce.TestTags
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.StatefulRedisConnection
 import io.lettuce.core.api.coroutines
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs
@@ -31,7 +30,6 @@ import javax.inject.Inject
 @ExtendWith(LettuceExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnabledOnCommand("TS.ADD")
-@OptIn(ExperimentalLettuceCoroutinesApi::class)
 class RedisTimeSeriesCoroutinesIntegrationTests @Inject constructor(
     private val connection: StatefulRedisConnection<String, String>
 ) {

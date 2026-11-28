@@ -7,7 +7,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.Range
 import io.lettuce.core.timeseries.TsAggregation
 import io.lettuce.core.timeseries.TsFilter
@@ -38,7 +37,6 @@ import io.lettuce.core.timeseries.arguments.TsReadArgs
  * @see <a href="https://redis.io/docs/latest/develop/data-types/timeseries/">Redis TimeSeries</a>
  * @since 8.0
  */
-@ExperimentalLettuceCoroutinesApi
 interface RedisTimeSeriesCoroutinesCommands<K : Any> {
 
     /**

@@ -20,7 +20,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 
 /**
  * Coroutine executed commands for HyperLogLog (PF* commands).
@@ -30,7 +29,6 @@ import io.lettuce.core.ExperimentalLettuceCoroutinesApi
  * @author Mikhael Sokolov
  * @since 6.0
  */
-@ExperimentalLettuceCoroutinesApi
 interface RedisHLLCoroutinesCommands<K : Any, V : Any> {
 
     /**

@@ -7,7 +7,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import io.lettuce.core.probabilistic.TDigestInfoValue
 import io.lettuce.core.probabilistic.arguments.TDigestMergeArgs
@@ -21,7 +20,6 @@ import io.lettuce.core.probabilistic.arguments.TDigestMergeArgs
  * @see <a href="https://redis.io/docs/latest/develop/data-types/probabilistic/t-digest/">Redis T-Digest</a>
  * @since 7.7
  */
-@ExperimentalLettuceCoroutinesApi
 interface RedisTDigestCoroutinesCommands<K : Any, V : Any> {
 
     /**

@@ -39,7 +39,6 @@ import org.junit.jupiter.params.provider.EnumSource
  * [KnownKotlinApiDeviations] has gone stale — the coroutine counterparts of `AggregateInterfaceConsistencyUnitTests` and
  * `DeviationTableStalenessUnitTests`, kept here so the Java test sources stay free of compile-time references to Kotlin types.
  */
-@OptIn(io.lettuce.core.ExperimentalLettuceCoroutinesApi::class)
 @Tag(UNIT_TEST)
 class KotlinCoroutinesConsistencyUnitTests {
 

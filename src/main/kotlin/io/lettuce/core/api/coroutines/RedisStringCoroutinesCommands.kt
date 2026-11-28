@@ -31,7 +31,6 @@ import kotlinx.coroutines.flow.Flow
  * @author Mikhael Sokolov
  * @since 6.0
  */
-@ExperimentalLettuceCoroutinesApi
 interface RedisStringCoroutinesCommands<K : Any, V : Any> {
 
     /**

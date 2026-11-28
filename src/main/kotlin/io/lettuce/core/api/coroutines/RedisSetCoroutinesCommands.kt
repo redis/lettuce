@@ -20,7 +20,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.ExpireArgs
 import io.lettuce.core.SAddExArgs
 import io.lettuce.core.SDiffCardArgs
@@ -41,7 +40,6 @@ import java.util.Date
  * @author Mikhael Sokolov
  * @since 6.0
  */
-@ExperimentalLettuceCoroutinesApi
 interface RedisSetCoroutinesCommands<K : Any, V : Any> {
 
     /**

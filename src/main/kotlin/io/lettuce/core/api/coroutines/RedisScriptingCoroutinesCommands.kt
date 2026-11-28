@@ -20,7 +20,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.FlushMode
 import io.lettuce.core.ScriptOutputType
 
@@ -33,7 +32,6 @@ import io.lettuce.core.ScriptOutputType
  * @author Mikhael Sokolov
  * @since 6.0
  */
-@ExperimentalLettuceCoroutinesApi
 interface RedisScriptingCoroutinesCommands<K : Any, V : Any> {
 
     /**

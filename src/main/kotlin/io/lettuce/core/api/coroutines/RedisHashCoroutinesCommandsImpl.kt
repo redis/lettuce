@@ -39,7 +39,6 @@ import java.util.*
  * @author Mikhael Sokolov
  * @since 6.0
  */
-@ExperimentalLettuceCoroutinesApi
 internal class RedisHashCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisHashReactiveCommands<K, V>) : RedisHashCoroutinesCommands<K, V> {
 
     override suspend fun hdel(key: K, vararg fields: K): Long? = ops.hdel(key, *fields).awaitFirstOrNull()

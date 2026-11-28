@@ -36,7 +36,6 @@ import io.lettuce.core.RestoreArgs
 import io.lettuce.core.ScanArgs
 import io.lettuce.core.ScanCursor
 import io.lettuce.core.SortArgs
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.annotations.Experimental
 import kotlinx.coroutines.flow.Flow
 
@@ -48,7 +47,6 @@ import kotlinx.coroutines.flow.Flow
  * @author Mikhael Sokolov
  * @since 6.0
  */
-@ExperimentalLettuceCoroutinesApi
 interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
 
     /**

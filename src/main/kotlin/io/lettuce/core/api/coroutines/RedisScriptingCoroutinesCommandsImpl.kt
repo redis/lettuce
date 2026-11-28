@@ -20,7 +20,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.FlushMode
 import io.lettuce.core.ScriptOutputType
 import io.lettuce.core.api.reactive.RedisScriptingReactiveCommands
@@ -39,7 +38,6 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @since 6.0
  *
  */
-@ExperimentalLettuceCoroutinesApi
 internal class RedisScriptingCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisScriptingReactiveCommands<K, V>) : RedisScriptingCoroutinesCommands<K, V> {
 
     override suspend fun <T> eval(script: String, type: ScriptOutputType, vararg keys: K): T? = ops.eval<T>(script, type, *keys).awaitFirstOrNull()

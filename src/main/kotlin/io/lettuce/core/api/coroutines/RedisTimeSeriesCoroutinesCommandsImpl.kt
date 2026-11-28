@@ -6,7 +6,6 @@
  */
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.Range
 import io.lettuce.core.api.reactive.RedisTimeSeriesReactiveCommands
 import io.lettuce.core.timeseries.TsAggregation
@@ -38,7 +37,6 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @author Aleksandar Todorov
  * @since 8.0
  */
-@ExperimentalLettuceCoroutinesApi
 internal class RedisTimeSeriesCoroutinesCommandsImpl<K : Any>(
     internal val ops: RedisTimeSeriesReactiveCommands<K>
 ) : RedisTimeSeriesCoroutinesCommands<K> {

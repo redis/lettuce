@@ -6,7 +6,6 @@
  */
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RedisCMSReactiveCommands
 import io.lettuce.core.probabilistic.CMSInfoValue
 import io.lettuce.core.probabilistic.CmsCellSize
@@ -24,7 +23,6 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @author Yordan Tsintsov
  * @since 7.7
  */
-@ExperimentalLettuceCoroutinesApi
 internal class RedisCMSCoroutinesCommandsImpl<K : Any, V : Any>(
     internal val ops: RedisCMSReactiveCommands<K, V>
 ) : RedisCMSCoroutinesCommands<K, V> {

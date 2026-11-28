@@ -7,7 +7,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.VAddArgs
 import io.lettuce.core.VSimArgs
 import io.lettuce.core.annotations.Experimental
@@ -31,7 +30,6 @@ import io.lettuce.core.vector.VectorMetadata
  * @see <a href="https://redis.io/docs/latest/develop/data-types/vector-sets/">Redis Vector Sets</a>
  * @since 6.7
  */
-@ExperimentalLettuceCoroutinesApi
 interface RedisVectorSetCoroutinesCommands<K : Any, V : Any> {
 
     /**

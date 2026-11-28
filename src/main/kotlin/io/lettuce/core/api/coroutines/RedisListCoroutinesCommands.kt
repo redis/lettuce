@@ -30,7 +30,6 @@ import io.lettuce.core.*
  * @author Mikhael Sokolov
  * @since 6.0
  */
-@ExperimentalLettuceCoroutinesApi
 interface RedisListCoroutinesCommands<K : Any, V : Any> {
 
     /**

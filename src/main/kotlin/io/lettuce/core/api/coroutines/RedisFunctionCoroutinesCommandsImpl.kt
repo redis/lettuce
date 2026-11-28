@@ -1,7 +1,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.FlushMode
 import io.lettuce.core.FunctionRestoreMode
 import io.lettuce.core.ScriptOutputType
@@ -15,7 +14,6 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @author Mark Paluch
  * @since 6.3
  */
-@ExperimentalLettuceCoroutinesApi
 internal class RedisFunctionCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisFunctionReactiveCommands<K, V>) :
     RedisFunctionCoroutinesCommands<K, V> {
 

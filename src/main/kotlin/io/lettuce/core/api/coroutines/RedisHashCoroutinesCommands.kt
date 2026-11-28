@@ -22,7 +22,6 @@ package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.annotations.Experimental
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.ExpireArgs
 import kotlinx.coroutines.flow.Flow
 import io.lettuce.core.HashImport
@@ -45,7 +44,6 @@ import java.util.*
  * @author Mikhael Sokolov
  * @since 6.0
  */
-@ExperimentalLettuceCoroutinesApi
 interface RedisHashCoroutinesCommands<K : Any, V : Any> {
 
     /**

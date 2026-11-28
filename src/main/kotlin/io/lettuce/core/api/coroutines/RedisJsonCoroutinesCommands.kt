@@ -7,7 +7,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.json.JsonPath
 import io.lettuce.core.json.JsonType
 import io.lettuce.core.json.JsonValue
@@ -25,7 +24,6 @@ import io.lettuce.core.json.arguments.JsonSetArgs
  * @see <a href="https://redis.io/docs/latest/develop/data-types/json/">Redis JSON</a>
  * @since 6.5
  */
-@ExperimentalLettuceCoroutinesApi
 interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
 
     /**

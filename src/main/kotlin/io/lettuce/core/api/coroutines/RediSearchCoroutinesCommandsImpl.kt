@@ -7,7 +7,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RediSearchReactiveCommands
 import io.lettuce.core.search.AggregationReply
 import io.lettuce.core.search.SearchReply
@@ -37,7 +36,6 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @author Tihomir Mateev
  * @since 6.8
  */
-@ExperimentalLettuceCoroutinesApi
 open class RediSearchCoroutinesCommandsImpl<K : Any>(internal val ops: RediSearchReactiveCommands<K>) :
     RediSearchCoroutinesCommands<K> {
 

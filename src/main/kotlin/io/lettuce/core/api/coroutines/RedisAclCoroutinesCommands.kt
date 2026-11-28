@@ -22,7 +22,6 @@ package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.AclCategory
 import io.lettuce.core.AclSetuserArgs
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.protocol.CommandType
 import io.lettuce.core.protocol.RedisCommand
 import kotlinx.coroutines.flow.Flow
@@ -33,7 +32,6 @@ import kotlinx.coroutines.flow.Flow
  * @author Mikhael Sokolov
  * @since 6.1
  */
-@ExperimentalLettuceCoroutinesApi
 interface RedisAclCoroutinesCommands<K : Any, V : Any> {
 
     /**

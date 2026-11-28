@@ -19,7 +19,6 @@
  */
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.TransactionResult
 
 /**
@@ -31,7 +30,6 @@ import io.lettuce.core.TransactionResult
  * @deprecated since 6.1.6
  */
 @Deprecated("since 6.1.6, coroutine transaction DSL commands complete only after EXEC")
-@ExperimentalLettuceCoroutinesApi
 suspend inline fun <K : Any, V : Any> RedisCoroutinesCommands<K, V>.multi(action: RedisCoroutinesCommands<K, V>.() -> Unit): TransactionResult? = try {
     multi()
     action.invoke(this)

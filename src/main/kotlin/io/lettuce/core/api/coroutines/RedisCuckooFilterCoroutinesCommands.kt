@@ -7,7 +7,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.probabilistic.CfInfoValue
 import io.lettuce.core.probabilistic.ScanDumpValue
 import io.lettuce.core.probabilistic.arguments.CfInsertArgs
@@ -22,7 +21,6 @@ import io.lettuce.core.probabilistic.arguments.CfReserveArgs
  * @see <a href="https://redis.io/docs/latest/develop/data-types/probabilistic/cuckoo-filter/">Redis Cuckoo Filter</a>
  * @since 7.7
  */
-@ExperimentalLettuceCoroutinesApi
 interface RedisCuckooFilterCoroutinesCommands<K : Any, V : Any> {
 
     /**

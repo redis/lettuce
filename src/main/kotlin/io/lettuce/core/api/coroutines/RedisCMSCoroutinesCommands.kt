@@ -7,7 +7,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import io.lettuce.core.probabilistic.CMSInfoValue
 import io.lettuce.core.probabilistic.CmsCellSize
@@ -23,7 +22,6 @@ import io.lettuce.core.probabilistic.MergePair
  * @see <a href="https://redis.io/docs/latest/develop/data-types/probabilistic/count-min-sketch/">Redis Count-Min Sketch</a>
  * @since 7.7
  */
-@ExperimentalLettuceCoroutinesApi
 interface RedisCMSCoroutinesCommands<K : Any, V : Any> {
 
     /**

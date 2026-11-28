@@ -6,7 +6,6 @@
  */
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RedisTDigestReactiveCommands
 import io.lettuce.core.probabilistic.TDigestInfoValue
 import io.lettuce.core.probabilistic.arguments.TDigestMergeArgs
@@ -22,7 +21,6 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @author Yordan Tsintsov
  * @since 7.7
  */
-@ExperimentalLettuceCoroutinesApi
 internal class RedisTDigestCoroutinesCommandsImpl<K : Any, V : Any>(
     internal val ops: RedisTDigestReactiveCommands<K, V>
 ) : RedisTDigestCoroutinesCommands<K, V> {

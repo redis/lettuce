@@ -20,7 +20,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.TransactionResult
 
 /**
@@ -31,7 +30,6 @@ import io.lettuce.core.TransactionResult
  * @author Mikhael Sokolov
  * @since 6.0
  */
-@ExperimentalLettuceCoroutinesApi
 interface RedisTransactionalCoroutinesCommands<K : Any, V : Any> {
 
     /**

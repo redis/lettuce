@@ -6,7 +6,6 @@
  */
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import io.lettuce.core.probabilistic.BfInfoValue
 import io.lettuce.core.probabilistic.arguments.BfInsertArgs
@@ -22,7 +21,6 @@ import io.lettuce.core.probabilistic.ScanDumpValue
  * @see <a href="https://redis.io/docs/latest/develop/data-types/probabilistic/bloom-filter/">Redis Bloom Filter</a>
  * @since 7.7
  */
-@ExperimentalLettuceCoroutinesApi
 interface RedisBloomFilterCoroutinesCommands<K : Any, V : Any> {
 
     /**

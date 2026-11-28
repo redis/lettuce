@@ -24,20 +24,15 @@ import kotlin.annotation.AnnotationRetention.BINARY
 import kotlin.annotation.AnnotationTarget.*
 
 /**
- * This annotation marks the Lettuce Coroutine API that is considered experimental and is not subject to the
- * general compatibility guarantees given for the library.
- * The behavior and design of such API may be changed in any further release.
+ * Previously marked Lettuce Coroutine APIs that required explicit opt-in.
  *
- * Beware using the annotated API especially if you're developing a library, since your library might become binary incompatible
- * with the future versions of the standard library.
- *
- * Any usage of a declaration annotated with `@ExperimentalLettuceCoroutinesApi` must be accepted either by
- * annotating that usage with the [OptIn] annotation, e.g. `@OptIn(ExperimentalLettuceCoroutinesApi::class)`,
- * or by using the compiler argument `-Xopt-in=io.lettuce.core.ExperimentalLettuceCoroutinesApi`.
+ * Lettuce Coroutine APIs are no longer experimental, so this marker is retained only to keep existing source code
+ * that still references `@OptIn(ExperimentalLettuceCoroutinesApi::class)` compatible.
  *
  * @author Mikhael Sokolov
  * @since 6.0
  */
+@Deprecated("Lettuce Coroutine APIs are no longer experimental. Remove this opt-in marker from your code.")
 @RequiresOptIn(level = WARNING)
 @Retention(BINARY)
 @Target(

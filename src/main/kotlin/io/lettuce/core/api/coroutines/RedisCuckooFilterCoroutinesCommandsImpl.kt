@@ -6,7 +6,6 @@
  */
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RedisCuckooFilterReactiveCommands
 import io.lettuce.core.probabilistic.CfInfoValue
 import io.lettuce.core.probabilistic.ScanDumpValue
@@ -24,7 +23,6 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @author Gyumin Hwang
  * @since 7.7
  */
-@ExperimentalLettuceCoroutinesApi
 internal class RedisCuckooFilterCoroutinesCommandsImpl<K : Any, V : Any>(
     internal val ops: RedisCuckooFilterReactiveCommands<K, V>
 ) : RedisCuckooFilterCoroutinesCommands<K, V> {

@@ -7,7 +7,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.probabilistic.IncrementPair
 import io.lettuce.core.probabilistic.TopKInfoValue
 import io.lettuce.core.probabilistic.TopKListValue
@@ -22,7 +21,6 @@ import io.lettuce.core.probabilistic.arguments.TopKReserveArgs
  * @see <a href="https://redis.io/docs/latest/develop/data-types/probabilistic/top-k/">Redis Top-K</a>
  * @since 7.7
  */
-@ExperimentalLettuceCoroutinesApi
 interface RedisTopKCoroutinesCommands<K : Any, V : Any> {
 
     /**

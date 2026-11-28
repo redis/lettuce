@@ -38,7 +38,6 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @since 6.0
  *
  */
-@ExperimentalLettuceCoroutinesApi
 internal class RedisSortedSetCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisSortedSetReactiveCommands<K, V>) : RedisSortedSetCoroutinesCommands<K, V> {
 
     override suspend fun bzmpop(
