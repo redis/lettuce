@@ -3,6 +3,7 @@ package io.lettuce.core.tracing;
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.net.InetSocketAddress;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -19,6 +20,7 @@ import brave.Tracer;
 import brave.Tracing;
 import brave.handler.MutableSpan;
 import brave.propagation.CurrentTraceContext;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
@@ -112,6 +114,45 @@ class BraveTracingUnitTests extends TestSupport {
         Object[] tags = ReflectionTestUtils.getField(braveSpan, "tags");
 
         assertThat(tags).contains("cmd", "AUTH");
+    }
+
+    @Test
+    void shouldReportConnectionDetailsFromRedisUri() {
+
+        BraveTracing tracing = BraveTracing.create(clientTracing);
+        RedisURI redisURI = RedisURI.builder().withHost("localhost").withPort(6379).withDatabase(3)
+                .withAuthentication("alice", "secret").build();
+        BraveTracing.BraveEndpoint endpoint = (BraveTracing.BraveEndpoint) tracing
+                .createEndpoint(new InetSocketAddress("127.0.0.1", 6379), redisURI);
+
+        BraveTracing.BraveSpan span = (BraveTracing.BraveSpan) tracing.getTracerProvider().getTracer().nextSpan();
+        span.remoteEndpoint(endpoint);
+        span.start(new AsyncCommand<>(new Command<>(CommandType.PING, null)));
+
+        MutableSpan braveSpan = ReflectionTestUtils.getField(span.getSpan(), "state");
+        Object[] tags = ReflectionTestUtils.getField(braveSpan, "tags");
+
+        assertThat(tags).contains("db.redis.database_index", "3", "db.user", "alice", "db.connection_string",
+                "redis://127.0.0.1/3");
+        assertThat(tags).noneMatch(tag -> String.valueOf(tag).contains("secret") || String.valueOf(tag).contains("@")
+                || String.valueOf(tag).contains("credentialsProvider"));
+    }
+
+    @Test
+    void shouldNotReportConnectionDetailsWithoutRedisUri() {
+
+        BraveTracing tracing = BraveTracing.create(clientTracing);
+        BraveTracing.BraveEndpoint endpoint = (BraveTracing.BraveEndpoint) tracing
+                .createEndpoint(new InetSocketAddress("127.0.0.1", 6379));
+
+        BraveTracing.BraveSpan span = (BraveTracing.BraveSpan) tracing.getTracerProvider().getTracer().nextSpan();
+        span.remoteEndpoint(endpoint);
+        span.start(new AsyncCommand<>(new Command<>(CommandType.PING, null)));
+
+        MutableSpan braveSpan = ReflectionTestUtils.getField(span.getSpan(), "state");
+        Object[] tags = ReflectionTestUtils.getField(braveSpan, "tags");
+
+        assertThat(tags).doesNotContain("db.redis.database_index", "db.user", "db.connection_string");
     }
 
 }
