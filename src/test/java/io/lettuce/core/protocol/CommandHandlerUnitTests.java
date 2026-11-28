@@ -72,6 +72,8 @@ import io.lettuce.test.ReflectionTestUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
+import io.netty.buffer.UnpooledByteBufAllocator;
+import io.netty.buffer.UnpooledHeapByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelConfig;
 import io.netty.channel.ChannelHandlerContext;
@@ -646,6 +648,67 @@ class CommandHandlerUnitTests {
         sut.setReadBuffer(null);
         sut.channelRead(context, Unpooled.wrappedBuffer(("*4\r\n" + "$3\r\nONE\r\n" + "$4\r\n>TW").getBytes()));
         assertThat(stack).hasSize(0);
+
+        sut.channelUnregistered(context);
+    }
+
+    /**
+     * @see <a href="https://github.com/redis/lettuce/issues/4030">Issue 4030</a>
+     */
+    @Test
+    void shouldNotClearReadBufferAfterReleaseInChannelUnregistered() throws Exception {
+
+        sut.channelRegistered(context);
+
+        ByteBuf originalBuffer = (ByteBuf) ReflectionTestUtils.getField(sut, "readBuffer");
+        ByteBuf recycledBuffer = Unpooled.buffer(64);
+        recycledBuffer.writeBytes("+OK\r\n".getBytes());
+        // Simulate immediate cross-thread reclamation (e.g. Netty 4.2 AdaptiveByteBufAllocator)
+        // so refCnt remains 1 after channelUnregistered() calls release().
+        recycledBuffer.retain();
+        sut.setReadBuffer(recycledBuffer);
+
+        try {
+            sut.channelUnregistered(context);
+
+            assertThat((Object) ReflectionTestUtils.getField(sut, "readBuffer")).isNull();
+            assertThat(recycledBuffer.refCnt()).isEqualTo(1);
+            assertThat(recycledBuffer.writerIndex()).isEqualTo(5);
+        } finally {
+            if (originalBuffer != null && originalBuffer.refCnt() > 0) {
+                originalBuffer.release();
+            }
+            if (recycledBuffer.refCnt() > 0) {
+                recycledBuffer.release();
+            }
+        }
+    }
+
+    /**
+     * @see <a href="https://github.com/redis/lettuce/issues/4027">Issue 4027</a>
+     * @see <a href="https://github.com/redis/lettuce/issues/4030">Issue 4030</a>
+     */
+    @Test
+    void shouldCloseChannelWhenWriteBytesThrowsInChannelRead() throws Exception {
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+        sut.getStack().add(command);
+
+        ByteBuf failingInput = new UnpooledHeapByteBuf(UnpooledByteBufAllocator.DEFAULT, 16, 16) {
+
+            @Override
+            public ByteBuf readerIndex(int readerIndex) {
+                throw new IndexOutOfBoundsException("readerIndex: " + readerIndex + ", writerIndex: 0");
+            }
+
+        };
+        failingInput.writeBytes("+OK\r\n".getBytes());
+
+        assertThatThrownBy(() -> sut.channelRead(context, failingInput)).isInstanceOf(IndexOutOfBoundsException.class);
+
+        verify(context).close();
+        assertThat(failingInput.refCnt()).isZero();
 
         sut.channelUnregistered(context);
     }
