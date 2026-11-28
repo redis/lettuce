@@ -8,12 +8,12 @@ package io.lettuce.core;
 
 import java.util.List;
 
-import io.lettuce.core.bf.BfInfoValue;
-import io.lettuce.core.bf.BfInfoValueParser;
-import io.lettuce.core.bf.BfScanDumpValue;
-import io.lettuce.core.bf.BfScanDumpValueParser;
-import io.lettuce.core.bf.arguments.BfInsertArgs;
-import io.lettuce.core.bf.arguments.BfReserveArgs;
+import io.lettuce.core.probabilistic.BfInfoValue;
+import io.lettuce.core.probabilistic.BfInfoValueParser;
+import io.lettuce.core.probabilistic.ScanDumpValue;
+import io.lettuce.core.probabilistic.ScanDumpValueParser;
+import io.lettuce.core.probabilistic.arguments.BfInsertArgs;
+import io.lettuce.core.probabilistic.arguments.BfReserveArgs;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.output.*;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
@@ -183,12 +183,12 @@ class RedisBloomFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V>
         return createCommand(BF_RESERVE, new StatusOutput<>(codec), args);
     }
 
-    Command<K, V, BfScanDumpValue> bfScanDump(K key, long iterator) {
+    Command<K, V, ScanDumpValue> bfScanDump(K key, long iterator) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(iterator);
 
-        return createCommand(BF_SCANDUMP, new EncodedComplexOutput<>(codec, BfScanDumpValueParser.INSTANCE), args);
+        return createCommand(BF_SCANDUMP, new EncodedComplexOutput<>(codec, ScanDumpValueParser.INSTANCE), args);
     }
 
 }

@@ -13,7 +13,6 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.socket.nio.NioChannelOption;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import jdk.net.ExtendedSocketOptions;
 
 /**
  * Utility class to determine if extended TCP keep-alive options are supported on the current platform and to apply them.
@@ -38,10 +37,10 @@ public class ExtendedKeepAliveSupport {
 
     static {
         // Extended keep-alive is supported if:
-        // 1. io_uring is available (Linux), OR
-        // 2. epoll is available (Linux), OR
+        // 1. epoll is available (Linux), OR
+        // 2. io_uring is available (Linux), OR
         // 3. NIO extended options are available AND kqueue is NOT available (not macOS)
-        EXTENDED_KEEPALIVE_SUPPORTED = IOUringProvider.isAvailable() || EpollProvider.isAvailable()
+        EXTENDED_KEEPALIVE_SUPPORTED = EpollProvider.isAvailable() || IOUringProvider.isAvailable()
                 || (ExtendedNioSocketOptions.isAvailable() && !KqueueProvider.isAvailable());
     }
 
@@ -66,13 +65,16 @@ public class ExtendedKeepAliveSupport {
      */
     public static boolean applyKeepAlive(Bootstrap bootstrap, int count, Duration idle, Duration interval) {
 
-        if (IOUringProvider.isAvailable()) {
-            IOUringProvider.applyKeepAlive(bootstrap, count, idle, interval);
+        // Order must match the native transport priority used to build the channel/event loop
+        // (see Transports.NativeTransports: Epoll > Kqueue > IOUring), otherwise keep-alive
+        // options for the wrong transport get applied to the bootstrap.
+        if (EpollProvider.isAvailable()) {
+            EpollProvider.applyKeepAlive(bootstrap, count, idle, interval);
             return true;
         }
 
-        if (EpollProvider.isAvailable()) {
-            EpollProvider.applyKeepAlive(bootstrap, count, idle, interval);
+        if (IOUringProvider.isAvailable()) {
+            IOUringProvider.applyKeepAlive(bootstrap, count, idle, interval);
             return true;
         }
 
@@ -89,10 +91,12 @@ public class ExtendedKeepAliveSupport {
     }
 
     /**
-     * Utility to support Java 11 {@link ExtendedSocketOptions extended keepalive options}.
+     * Utility to support Java 11 {@link jdk.net.ExtendedSocketOptions extended keepalive options}.
      */
     @SuppressWarnings("unchecked")
     static class ExtendedNioSocketOptions {
+
+        private static final String EXTENDED_SOCKET_OPTIONS_CLASS = "jdk.net.ExtendedSocketOptions";
 
         private static final SocketOption<Integer> TCP_KEEPCOUNT;
 
@@ -107,12 +111,15 @@ public class ExtendedKeepAliveSupport {
             SocketOption<Integer> keepInterval = null;
             try {
 
-                keepCount = (SocketOption<Integer>) ExtendedSocketOptions.class.getDeclaredField("TCP_KEEPCOUNT").get(null);
-                keepIdle = (SocketOption<Integer>) ExtendedSocketOptions.class.getDeclaredField("TCP_KEEPIDLE").get(null);
-                keepInterval = (SocketOption<Integer>) ExtendedSocketOptions.class.getDeclaredField("TCP_KEEPINTERVAL")
-                        .get(null);
-            } catch (ReflectiveOperationException e) {
-                logger.trace("Cannot extract ExtendedSocketOptions for KeepAlive", e);
+                // Resolve via Class.forName instead of a class literal so that runtimes without the jdk.net module
+                // (e.g. custom jlink images) degrade gracefully instead of failing with NoClassDefFoundError.
+                Class<?> extendedSocketOptions = Class.forName(EXTENDED_SOCKET_OPTIONS_CLASS);
+                keepCount = (SocketOption<Integer>) extendedSocketOptions.getDeclaredField("TCP_KEEPCOUNT").get(null);
+                keepIdle = (SocketOption<Integer>) extendedSocketOptions.getDeclaredField("TCP_KEEPIDLE").get(null);
+                keepInterval = (SocketOption<Integer>) extendedSocketOptions.getDeclaredField("TCP_KEEPINTERVAL").get(null);
+            } catch (ReflectiveOperationException | LinkageError e) {
+                logger.debug("jdk.net.ExtendedSocketOptions is not available, extended keep-alive options will not be applied",
+                        e);
             }
 
             TCP_KEEPCOUNT = keepCount;

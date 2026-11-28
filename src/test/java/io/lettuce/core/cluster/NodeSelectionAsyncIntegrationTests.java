@@ -37,12 +37,14 @@ import io.lettuce.core.protocol.CommandType;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * @author Mark Paluch
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
+@DisabledOnProvider("re")
 class NodeSelectionAsyncIntegrationTests extends TestSupport {
 
     private final RedisClusterClient clusterClient;

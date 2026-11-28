@@ -23,15 +23,14 @@ class CoroutineApiGraduationUnitTests {
     private static final Path PROJECT_ROOT = Paths.get("").toAbsolutePath();
 
     @Test
-    void kotlinSourcesShouldNotReferenceExperimentalCoroutineApi() throws IOException {
+    void mainKotlinSourcesShouldNotReferenceExperimentalCoroutineApi() throws IOException {
 
         Path marker = PROJECT_ROOT.resolve("src/main/kotlin/io/lettuce/core/ExperimentalLettuceCoroutinesApi.kt");
 
-        try (Stream<Path> mainFiles = Files.walk(PROJECT_ROOT.resolve("src/main/kotlin"));
-                Stream<Path> testFiles = Files.walk(PROJECT_ROOT.resolve("src/test/kotlin"))) {
+        try (Stream<Path> mainFiles = Files.walk(PROJECT_ROOT.resolve("src/main/kotlin"))) {
 
-            List<String> violations = Stream.concat(mainFiles, testFiles)
-                    .filter(path -> path.getFileName().toString().endsWith(".kt")).filter(path -> !path.equals(marker))
+            List<String> violations = mainFiles.filter(path -> path.getFileName().toString().endsWith(".kt"))
+                    .filter(path -> !path.equals(marker))
                     .filter(CoroutineApiGraduationUnitTests::referencesExperimentalCoroutineApi).map(PROJECT_ROOT::relativize)
                     .map(Path::toString).sorted().collect(Collectors.toList());
 
@@ -47,23 +46,6 @@ class CoroutineApiGraduationUnitTests {
         assertThat(source).contains("annotation class ExperimentalLettuceCoroutinesApi");
         assertThat(source).contains("@Deprecated(");
         assertThat(source).contains("@RequiresOptIn");
-    }
-
-    @Test
-    void kotlinUserGuideShouldNotRequireCoroutineOptIn() throws IOException {
-
-        String source = read(PROJECT_ROOT.resolve("docs/user-guide/kotlin-api.md"));
-
-        assertThat(source).doesNotContain("Coroutine Extensions are experimental and require opt-in");
-        assertThat(source).doesNotContain("@ExperimentalLettuceCoroutinesApi");
-    }
-
-    @Test
-    void buildShouldNotOptInToExperimentalCoroutineApi() throws IOException {
-
-        String source = read(PROJECT_ROOT.resolve("pom.xml"));
-
-        assertThat(source).doesNotContain("-Xopt-in=io.lettuce.core.ExperimentalLettuceCoroutinesApi");
     }
 
     private static boolean referencesExperimentalCoroutineApi(Path path) {

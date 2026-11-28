@@ -32,6 +32,7 @@ import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.test.condition.RedisConditions;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * Integration tests for Redis 8.6+ mTLS client authentication in cluster mode.
@@ -42,6 +43,7 @@ import io.lettuce.test.condition.RedisConditions;
  * @author Aleksandar Todorov
  */
 @Tag(INTEGRATION_TEST)
+@DisabledOnProvider("re")
 class ClusterMtlsClientAuthIntegrationTests extends AbstractMtlsClientAuthIntegrationTests {
 
     private RedisClusterClient redisClusterClient;

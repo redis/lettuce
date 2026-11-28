@@ -49,11 +49,13 @@ public interface StatefulRedisConnection<K, V> extends StatefulConnection<K, V> 
      * Returns the {@link RedisReactiveCommands} API for the current connection. Does not create a new connection.
      *
      * @return the reactive API for the underlying connection.
-     * @deprecated since 7.7, use {@link #commands(CommandsFactory)} with {@link RedisReactiveCommands#factory()} instead;
-     *             scheduled for removal in Lettuce 8.0.
+     * @deprecated since 7.8, use {@link #commands(CommandsFactory)} with {@link RedisReactiveCommands#factory()} instead;
+     *             scheduled for removal in a future major release.
      */
     @Deprecated
-    RedisReactiveCommands<K, V> reactive();
+    default RedisReactiveCommands<K, V> reactive() {
+        return commands(RedisReactiveCommands.factory());
+    }
 
     /**
      * Add a new {@link PushListener listener} to consume push messages.
@@ -80,12 +82,8 @@ public interface StatefulRedisConnection<K, V> extends StatefulConnection<K, V> 
      * @param factory the command API factory, must not be {@code null}
      * @param <T> the command API type
      * @return the command API bound to this connection
-     * @throws UnsupportedOperationException if the connection implementation does not override this method. The default is
-     *         provided only for source compatibility in Lettuce 7.x and becomes an abstract method in Lettuce 8.0.
-     * @since 7.7
+     * @since 7.8
      */
-    default <T> T commands(CommandsFactory<StatefulRedisConnection<K, V>, T> factory) {
-        throw new UnsupportedOperationException("commands(CommandsFactory) is not implemented by this connection");
-    }
+    <T> T commands(CommandsFactory<StatefulRedisConnection<K, V>, T> factory);
 
 }

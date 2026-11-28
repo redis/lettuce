@@ -11,6 +11,9 @@ use.
 
 ### Dependencies
 
+The Kotlin API needs Kotlin 2.2 or later, both for the compiler and for
+`kotlin-stdlib` at runtime.
+
 Coroutines support is available when `kotlinx-coroutines-core` and
 `kotlinx-coroutines-reactive` dependencies are on the classpath:
 

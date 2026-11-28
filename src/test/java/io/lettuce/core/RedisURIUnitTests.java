@@ -29,11 +29,14 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.core.failover.api.ImmutableRedisURI;
 import io.lettuce.core.internal.LettuceSets;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -85,6 +88,38 @@ class RedisURIUnitTests {
     }
 
     @Test
+    void toStringShouldUnwrapCredentialsProviderFailure() {
+
+        RedisException cause = new RedisException("auth failed");
+        CredentialsProvider failing = () -> {
+            CompletableFuture<RedisCredentials> f = new CompletableFuture<>();
+            f.completeExceptionally(cause);
+            return f;
+        };
+
+        RedisURI redisURI = RedisURI.create("redis://localhost:1234/5");
+        redisURI.setCredentialsProvider(failing);
+
+        assertThatThrownBy(redisURI::toString).isSameAs(cause).isNotInstanceOf(CompletionException.class);
+    }
+
+    @Test
+    void toStringShouldUnwrapCredentialsProviderRuntimeFailure() {
+
+        IllegalStateException cause = new IllegalStateException("boom");
+        CredentialsProvider failing = () -> {
+            CompletableFuture<RedisCredentials> f = new CompletableFuture<>();
+            f.completeExceptionally(cause);
+            return f;
+        };
+
+        RedisURI redisURI = RedisURI.create("redis://localhost:1234/5");
+        redisURI.setCredentialsProvider(failing);
+
+        assertThatThrownBy(redisURI::toString).isSameAs(cause).isNotInstanceOf(CompletionException.class);
+    }
+
+    @Test
     void shouldNotBlockOnReactiveThreadForToString() {
 
         RedisURI redisURI = RedisURI.create("redis://user:secret@localhost:1234/5");
@@ -116,7 +151,8 @@ class RedisURIUnitTests {
     void shouldMaskCredentialsForNonImmediateProvider() {
 
         RedisURI redisURI = RedisURI.create("redis://localhost:1234/5");
-        redisURI.setCredentialsProvider(() -> Mono.fromCallable(() -> RedisCredentials.just("alice", "secret".toCharArray())));
+        redisURI.setCredentialsProvider(
+                () -> CompletableFuture.completedFuture(RedisCredentials.just("alice", "secret".toCharArray())));
 
         assertThat(redisURI).hasToString("redis://alice:******@localhost:1234/5");
     }
@@ -404,8 +440,8 @@ class RedisURIUnitTests {
             assertThat(credentials.getPassword()).isEqualTo("bar".toCharArray());
         }).verifyComplete();
 
-        RedisCredentialsProvider provider = () -> Mono
-                .just(RedisCredentials.just("suppliedUsername", "suppliedPassword".toCharArray()));
+        CredentialsProvider provider = () -> CompletableFuture
+                .completedFuture(RedisCredentials.just("suppliedUsername", "suppliedPassword".toCharArray()));
 
         RedisURI sourceCp = new RedisURI();
         sourceCp.setCredentialsProvider(provider);
@@ -520,6 +556,164 @@ class RedisURIUnitTests {
 
         // setLibraryName should completely replace (no drivers)
         assertThat(redisURI.getLibraryName()).isEqualTo("my-custom-lib");
+    }
+
+    @Test
+    void setCredentialsProviderExposedViaAsyncAccessor() {
+
+        RedisURI redisURI = RedisURI.create("redis://localhost");
+        CredentialsProvider provider = CredentialsProvider.from(() -> RedisCredentials.just("alice", "secret".toCharArray()));
+
+        redisURI.setCredentialsProvider(provider);
+
+        assertThat(redisURI.getCredentialsProviderAsync()).isSameAs(provider);
+
+        RedisCredentials credentials = redisURI.getCredentialsProviderAsync().resolveCredentialsAsync().toCompletableFuture()
+                .join();
+        assertThat(credentials.getUsername()).isEqualTo("alice");
+        assertThat(credentials.getPassword()).isEqualTo("secret".toCharArray());
+    }
+
+    @Test
+    void setAuthenticationResolvesViaAsyncAccessor() {
+
+        RedisURI redisURI = RedisURI.create("redis://localhost");
+        redisURI.setAuthentication("alice", "secret");
+
+        RedisCredentials credentials = redisURI.getCredentialsProviderAsync().resolveCredentialsAsync().toCompletableFuture()
+                .join();
+        assertThat(credentials.getUsername()).isEqualTo("alice");
+        assertThat(credentials.getPassword()).isEqualTo("secret".toCharArray());
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void deprecatedCredentialsGetterRoundTripsSameCredentials() {
+
+        RedisURI redisURI = RedisURI.create("redis://localhost");
+        redisURI.setAuthentication("alice", "secret");
+
+        RedisCredentials credentials = redisURI.getCredentialsProvider().resolveCredentialsAsync().toCompletableFuture().join();
+        assertThat(credentials.getUsername()).isEqualTo("alice");
+        assertThat(credentials.getPassword()).isEqualTo("secret".toCharArray());
+    }
+
+    @Test
+    void builderWithReactorFreeCredentialsProvider() {
+
+        CredentialsProvider provider = CredentialsProvider.from(() -> RedisCredentials.just("alice", "secret".toCharArray()));
+
+        RedisURI redisURI = RedisURI.builder().withHost("localhost").withAuthentication(provider).build();
+
+        assertThat(redisURI.getCredentialsProviderAsync()).isSameAs(provider);
+    }
+
+    @Test
+    void builderWithUsernamePasswordResolvesViaAsyncAccessor() {
+
+        RedisURI redisURI = RedisURI.builder().withHost("localhost").withAuthentication("alice", "secret".toCharArray())
+                .build();
+
+        RedisCredentials credentials = redisURI.getCredentialsProviderAsync().resolveCredentialsAsync().toCompletableFuture()
+                .join();
+        assertThat(credentials.getUsername()).isEqualTo("alice");
+        assertThat(credentials.getPassword()).isEqualTo("secret".toCharArray());
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void legacyReactiveProviderIsResolvableViaAsyncBridge() {
+
+        RedisURI redisURI = RedisURI.create("redis://localhost");
+        RedisCredentialsProvider legacy = () -> Mono.just(RedisCredentials.just("bob", "legacy-secret".toCharArray()));
+
+        redisURI.setCredentialsProvider(legacy);
+
+        // A RedisCredentialsProvider is a CredentialsProvider, so it is stored as-is (no adapter wrapping).
+        assertThat(redisURI.getCredentialsProviderAsync()).isSameAs(legacy);
+        assertThat(redisURI.getCredentialsProvider()).isSameAs(legacy);
+
+        // The RedisCredentialsProvider default bridges Mono -> CompletionStage for the reactor-free resolution path.
+        RedisCredentials credentials = redisURI.getCredentialsProviderAsync().resolveCredentialsAsync().toCompletableFuture()
+                .join();
+        assertThat(credentials.getUsername()).isEqualTo("bob");
+        assertThat(credentials.getPassword()).isEqualTo("legacy-secret".toCharArray());
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void reactorFreeProviderExposedReactivelyViaAdapter() {
+
+        RedisURI redisURI = RedisURI.create("redis://localhost");
+        CredentialsProvider provider = CredentialsProvider.from(() -> RedisCredentials.just("carol", "secret".toCharArray()));
+
+        redisURI.setCredentialsProvider(provider);
+
+        RedisCredentialsProvider reactiveView = redisURI.getCredentialsProvider();
+        assertThat(reactiveView).isInstanceOf(AsyncCredentialsProviderAdapter.class);
+
+        StepVerifier.create(reactiveView.resolveCredentials()).assertNext(credentials -> {
+            assertThat(credentials.getUsername()).isEqualTo("carol");
+            assertThat(credentials.getPassword()).isEqualTo("secret".toCharArray());
+        }).verifyComplete();
+    }
+
+    @Test
+    void immutableRedisUriRejectsCredentialsProvider() {
+
+        ImmutableRedisURI immutable = new ImmutableRedisURI(RedisURI.create("redis://localhost"));
+        CredentialsProvider provider = CredentialsProvider.from(() -> RedisCredentials.just("dave", "secret".toCharArray()));
+
+        assertThatThrownBy(() -> immutable.setCredentialsProvider(provider)).isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void toStringMasksCredentialsWhenStageRejectsToCompletableFuture() {
+
+        RedisURI redisURI = RedisURI.create("redis://localhost");
+        // A CredentialsProvider whose CompletionStage rejects toCompletableFuture() (permitted by the contract).
+        redisURI.setCredentialsProvider(() -> {
+            RejectingCompletableFuture stage = new RejectingCompletableFuture();
+            stage.complete(RedisCredentials.just("alice", "secret".toCharArray()));
+            return stage;
+        });
+
+        assertThat(redisURI.toString()).contains("alice:******@");
+    }
+
+    @Test
+    void copyingAuthenticationShouldUseOverriddenCredentialsProviderAccessor() {
+
+        CredentialsProvider exposed = () -> CompletableFuture
+                .completedFuture(RedisCredentials.just("exposed", "secret".toCharArray()));
+        RedisURI source = new RedisURI() {
+
+            @Override
+            public CredentialsProvider getCredentialsProviderAsync() {
+                return exposed;
+            }
+
+        };
+
+        RedisURI target = RedisURI.create("localhost", 6379);
+        target.applyAuthentication(source);
+        assertThat(target.getCredentialsProviderAsync()).isSameAs(exposed);
+
+        RedisURI built = RedisURI.builder().withHost("localhost").withAuthentication(source).build();
+        assertThat(built.getCredentialsProviderAsync()).isSameAs(exposed);
+    }
+
+    /**
+     * A {@link CompletableFuture} that refuses {@link #toCompletableFuture()} to emulate a minimal {@link CompletionStage}
+     * implementation; {@code whenComplete} still works.
+     */
+    private static class RejectingCompletableFuture extends CompletableFuture<RedisCredentials> {
+
+        @Override
+        public CompletableFuture<RedisCredentials> toCompletableFuture() {
+            throw new UnsupportedOperationException("minimal CompletionStage does not support toCompletableFuture()");
+        }
+
     }
 
 }

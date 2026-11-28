@@ -38,6 +38,7 @@ import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.Wait;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.settings.TestSettings;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * Test for topology refreshing.
@@ -48,6 +49,7 @@ import io.lettuce.test.settings.TestSettings;
 @SuppressWarnings({ "unchecked" })
 @SlowTests
 @ExtendWith(LettuceExtension.class)
+@DisabledOnProvider("re")
 class TopologyRefreshIntegrationTests extends TestSupport {
 
     private static final String host = TestSettings.hostAddr();

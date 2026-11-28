@@ -22,6 +22,7 @@ import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -46,6 +47,9 @@ class MasterReplicaConnectionProviderUnitTests {
     RedisChannelHandler<String, String> channelHandlerMock;
 
     private StatefulRedisConnection<String, String> nodeConnectionMock;
+
+    @Mock(extraInterfaces = StatefulRedisConnection.class)
+    RedisChannelHandler<String, String> replicaChannelHandlerMock;
 
     @Mock
     RedisCommands<String, String> commandsMock;
@@ -88,6 +92,85 @@ class MasterReplicaConnectionProviderUnitTests {
 
         assertThat(connection).isSameAs(nodeConnectionMock);
         verify(nodeConnectionMock, never()).isOpen();
+    }
+
+    @Test
+    void shouldSkipFailedReplicaWithOrderSensitiveReadFrom() {
+
+        StatefulRedisConnection<String, String> upstream = upstreamAndReplica();
+        when(clientMock.connectAsync(eq(StringCodec.UTF8), argThat(uri -> uri.getPort() == 2))).thenReturn(failedConnection());
+
+        sut.setReadFrom(ReadFrom.REPLICA_PREFERRED);
+
+        StatefulRedisConnection<String, String> connection = sut.getConnectionAsync(ConnectionIntent.READ).join();
+
+        assertThat(connection).isSameAs(upstream);
+    }
+
+    @Test
+    void shouldSkipFailedReplicaWithRandomReadFrom() {
+
+        StatefulRedisConnection<String, String> upstream = upstreamAndReplica();
+        when(clientMock.connectAsync(eq(StringCodec.UTF8), argThat(uri -> uri.getPort() == 2))).thenReturn(failedConnection());
+
+        sut.setReadFrom(ReadFrom.ANY);
+
+        StatefulRedisConnection<String, String> connection = sut.getConnectionAsync(ConnectionIntent.READ).join();
+
+        assertThat(connection).isSameAs(upstream);
+    }
+
+    @Test
+    void shouldPreferReplicaWhenAllCandidatesConnect() {
+
+        upstreamAndReplica();
+        StatefulRedisConnection<String, String> replica = (StatefulRedisConnection) replicaChannelHandlerMock;
+        when(replica.isOpen()).thenReturn(true);
+        when(clientMock.connectAsync(eq(StringCodec.UTF8), argThat(uri -> uri.getPort() == 2)))
+                .thenReturn(ConnectionFuture.completed(null, replica));
+
+        sut.setReadFrom(ReadFrom.REPLICA_PREFERRED);
+
+        StatefulRedisConnection<String, String> connection = sut.getConnectionAsync(ConnectionIntent.READ).join();
+
+        assertThat(connection).isSameAs(replica);
+    }
+
+    @Test
+    void shouldFailWhenAllReadCandidatesFail() {
+
+        upstreamAndReplica();
+        when(clientMock.connectAsync(eq(StringCodec.UTF8), any())).thenReturn(failedConnection());
+
+        sut.setReadFrom(ReadFrom.REPLICA_PREFERRED);
+
+        assertThatThrownBy(() -> sut.getConnectionAsync(ConnectionIntent.READ).join())
+                .hasRootCauseInstanceOf(RedisConnectionException.class);
+
+        sut.setReadFrom(ReadFrom.ANY);
+
+        assertThatThrownBy(() -> sut.getConnectionAsync(ConnectionIntent.READ).join())
+                .hasRootCauseInstanceOf(RedisConnectionException.class);
+    }
+
+    private StatefulRedisConnection<String, String> upstreamAndReplica() {
+
+        sut.setKnownNodes(Arrays.asList(
+                new RedisMasterReplicaNode("localhost", 1, RedisURI.create("localhost", 1), RedisInstance.Role.UPSTREAM),
+                new RedisMasterReplicaNode("localhost", 2, RedisURI.create("localhost", 2), RedisInstance.Role.REPLICA)));
+
+        when(nodeConnectionMock.isOpen()).thenReturn(true);
+        when(clientMock.connectAsync(eq(StringCodec.UTF8), argThat(uri -> uri.getPort() == 1)))
+                .thenReturn(ConnectionFuture.completed(null, nodeConnectionMock));
+
+        return nodeConnectionMock;
+    }
+
+    private static ConnectionFuture<StatefulRedisConnection<String, String>> failedConnection() {
+
+        CompletableFuture<StatefulRedisConnection<String, String>> failed = new CompletableFuture<>();
+        failed.completeExceptionally(new RedisConnectionException("Unable to connect"));
+        return ConnectionFuture.from(null, failed);
     }
 
 }

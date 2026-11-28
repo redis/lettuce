@@ -35,19 +35,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        redis_version:
-          - "8.8"
-          - "8.6"
-          - "8.4"
-          - "8.2"
-          - "8.0"
-          - "7.4"
-          - "7.2"
+        # Full version set runs only on the nightly schedule; PRs and pushes
+        # test a reduced set (7.2 LTS, 7.4 LTS, 8.2 LTS, 8.8, 8.10, 8.12 current stable) to keep CI fast.
+        redis_version: ${{ fromJSON(github.event_name == 'schedule'
+          && '["8.12","8.10", "8.8", "8.6", "8.4", "8.2", "7.4", "7.2"]'
+          || '["8.12","8.10", "8.8", "8.2", "7.4", "7.2"]') }}
     uses: ./.github/workflows/run-tests.yml
     with:
       redis_version: ${{ matrix.redis_version }}
     secrets:
       codecov_token: ${{ secrets.CODECOV_TOKEN }}
+      SECURITY_API_TOKEN: ${{ secrets.SECURITY_API_TOKEN }}
 
   build_using_custom_image:
     name: Build and Test using custom image
@@ -57,3 +55,5 @@ jobs:
       client_libs_test_image_tag: ${{ github.event.inputs.client_libs_test_image_tag }}
       skip_unit_tests: true
       upload_coverage: false
+    secrets:
+      SECURITY_API_TOKEN: ${{ secrets.SECURITY_API_TOKEN }}

@@ -29,12 +29,14 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.Wait;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * @author Mark Paluch
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
+@DisabledOnProvider("re")
 class NodeSelectionSyncIntegrationTests extends TestSupport {
 
     private final RedisClusterClient clusterClient;

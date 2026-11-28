@@ -3,7 +3,6 @@ package io.lettuce.core.failover.api;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.MaintNotificationsConfig;
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
 import io.lettuce.core.failover.health.PingStrategy;
 import io.lettuce.core.internal.LettuceAssert;
@@ -25,7 +24,6 @@ import io.lettuce.core.internal.LettuceAssert;
  * @author Ali Takavci
  * @since 7.4
  */
-@Experimental
 public class DatabaseConfig {
 
     private static final float DEFAULT_WEIGHT = 1.0f;
@@ -124,6 +122,7 @@ public class DatabaseConfig {
     public int hashCode() {
         int result = redisURI.hashCode();
         result = 31 * result + (weight != +0.0f ? Float.floatToIntBits(weight) : 0);
+        result = 31 * result + clientOptions.hashCode();
         result = 31 * result + (circuitBreakerConfig != null ? circuitBreakerConfig.hashCode() : 0);
         result = 31 * result + healthCheckStrategySupplier.hashCode();
         return result;
@@ -157,6 +156,7 @@ public class DatabaseConfig {
     public Builder mutate() {
         Builder builder = new Builder(this.redisURI);
         builder.weight = this.weight;
+        builder.clientOptions = this.clientOptions;
         builder.circuitBreakerConfig = this.circuitBreakerConfig;
         builder.healthCheckStrategySupplier = this.healthCheckStrategySupplier;
         return builder;
@@ -195,6 +195,15 @@ public class DatabaseConfig {
             return this;
         }
 
+        /**
+         * Set the client options used for connections to this database. Defaults to {@link ClientOptions#create()}. Unless
+         * configured explicitly through {@link ClientOptions.Builder#maintNotificationsConfig(MaintNotificationsConfig)},
+         * maintenance notifications are disabled for multi-database configurations regardless of the
+         * {@link ClientOptions#DEFAULT_MAINT_NOTIFICATIONS_CONFIG} setting.
+         *
+         * @param clientOptions the client options, must not be {@code null}
+         * @return {@code this} builder
+         */
         public Builder clientOptions(ClientOptions clientOptions) {
             this.clientOptions = MultiDbClientOptions.from(clientOptions);
 

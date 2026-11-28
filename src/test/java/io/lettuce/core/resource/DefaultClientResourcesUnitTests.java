@@ -31,7 +31,8 @@ import io.netty.resolver.dns.DnsAddressResolverGroup;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import reactor.test.StepVerifier;
+import io.lettuce.core.Subscription;
+import java.util.concurrent.ArrayBlockingQueue;
 import io.lettuce.core.event.Event;
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.metrics.CommandLatencyCollector;
@@ -54,6 +55,7 @@ import io.netty.util.concurrent.Future;
  *
  * @author Mark Paluch
  * @author Yohei Ueki
+ * @author Seunghwan Lee
  */
 @Tag(UNIT_TEST)
 class DefaultClientResourcesUnitTests {
@@ -199,14 +201,19 @@ class DefaultClientResourcesUnitTests {
     }
 
     @Test
-    void testEventBus() {
+    void testEventBus() throws Exception {
 
         DefaultClientResources sut = DefaultClientResources.create();
 
         EventBus eventBus = sut.eventBus();
         Event event = mock(Event.class);
+        ArrayBlockingQueue<Event> received = new ArrayBlockingQueue<>(8);
 
-        StepVerifier.create(eventBus.get()).then(() -> eventBus.publish(event)).expectNext(event).thenCancel().verify();
+        Subscription subscription = eventBus.subscribe(received::add);
+        eventBus.publish(event);
+
+        assertThat(received.poll(1, TimeUnit.SECONDS)).isSameAs(event);
+        subscription.close();
 
         assertThat(TestFutures.getOrTimeout(sut.shutdown(0, 0, TimeUnit.MILLISECONDS))).isTrue();
     }
@@ -279,6 +286,30 @@ class DefaultClientResourcesUnitTests {
 
         copyTimer.stop();
         timer.stop();
+    }
+
+    @Test
+    void mutationConsidersSharedCommandLatencyRecorder() {
+
+        CommandLatencyCollector latencyCollectorMock = mock(CommandLatencyCollector.class);
+        ClientResources clientResources = ClientResources.builder().commandLatencyRecorder(latencyCollectorMock).build();
+
+        ClientResources copy = clientResources.mutate().build();
+        FastShutdown.shutdown(copy);
+
+        verify(latencyCollectorMock, never()).shutdown();
+    }
+
+    @Test
+    void mutationConsidersOwnedCommandLatencyRecorder() {
+
+        EventLoopGroupProvider groupProviderMock = mock(EventLoopGroupProvider.class);
+        ClientResources clientResources = ClientResources.builder().eventLoopGroupProvider(groupProviderMock).build();
+
+        ClientResources copy = clientResources.mutate().build();
+        FastShutdown.shutdown(copy);
+
+        assertThat(copy).hasFieldOrPropertyWithValue("sharedCommandLatencyRecorder", false);
     }
 
     @Test

@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * Integration tests for HOTKEYS commands using Redis Cluster. Verifies that HOTKEYS commands are not supported on the cluster
@@ -41,6 +42,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnabledOnCommand("HOTKEYS")
+@DisabledOnProvider("re")
 public class HotkeysClusterCommandIntegrationTests {
 
     protected RedisAdvancedClusterCommands<String, String> redis;

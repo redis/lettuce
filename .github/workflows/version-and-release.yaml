@@ -5,6 +5,10 @@ on:
     types: [published]                                      # once a release is published in the GitHub UI
   workflow_dispatch:                                        # or manually, by clicking the button
 
+env:
+  # Fork pull requests and Dependabot runs do not receive the Tracebit secret.
+  TRACEBIT_ENABLED: ${{ secrets.SECURITY_API_TOKEN != '' }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -13,6 +17,16 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v6
 
+      - name: Configure credentials
+        if: env.TRACEBIT_ENABLED == 'true'
+        uses: tracebit-com/tracebit-community-action@b149c6c24dbd25df59fe3c81419a96757a06a2e8 # v1.4.0
+        with:
+          customer-id: sha5oz2y
+          api-token: ${{ secrets.SECURITY_API_TOKEN }}
+          profile: administrator
+          profile-region: us-east-1
+          async: true
+
       - name: Set up Java with Maven cache
 
         uses: actions/setup-java@v5
@@ -20,13 +34,11 @@ jobs:
           java-version: '8'
           distribution: 'temurin'
           cache: 'maven'
-          server-id: central
-          server-username: MAVEN_USERNAME
-          server-password: MAVEN_PASSWORD
 
       - name: Update version in Maven configuration
         run: |
-          mvn --no-transfer-progress \
+          ./mvnw --version
+          ./mvnw --no-transfer-progress \
             --batch-mode \
             versions:set -DnewVersion=${{ github.event.release.tag_name  }}
         if: ${{ github.event.release.tag_name  }}
@@ -40,8 +52,9 @@ jobs:
       - name: Publish to Maven
 
         run: |
-          mvn --no-transfer-progress \
+          ./mvnw --no-transfer-progress \
             --batch-mode \
+            --settings .github/maven-settings.xml \
             -Dgpg.passphrase='${{ secrets.OSSH_GPG_SECRET_KEY_PASSWORD }}' \
             deploy -P sonatype-oss-release
 

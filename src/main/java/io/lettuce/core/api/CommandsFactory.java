@@ -14,7 +14,7 @@ import java.util.function.Function;
  * @param <C> the connection type this factory accepts
  * @param <T> the command API type this factory creates
  * @author Aleksandar Todorov
- * @since 7.7
+ * @since 7.8
  */
 public interface CommandsFactory<C, T> extends Function<C, T> {
 

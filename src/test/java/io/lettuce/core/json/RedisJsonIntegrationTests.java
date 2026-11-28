@@ -9,6 +9,7 @@ package io.lettuce.core.json;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import reactor.test.StepVerifier;
@@ -42,10 +44,13 @@ import java.util.concurrent.ExecutionException;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import io.lettuce.test.resource.ModulesTestUri;
 
 @Tag(INTEGRATION_TEST)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RedisJsonIntegrationTests {
 
     private static final String BIKES_INVENTORY = "bikes:inventory";
@@ -63,10 +68,15 @@ public class RedisJsonIntegrationTests {
     protected static RedisCommands<String, String> redis;
 
     public RedisJsonIntegrationTests() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+        RedisURI redisURI = ModulesTestUri.create();
 
         client = RedisClient.create(redisURI);
+        client.setOptions(getOptions());
         redis = client.connect().sync();
+    }
+
+    protected ClientOptions getOptions() {
+        return ClientOptions.builder().build();
     }
 
     @BeforeEach
@@ -217,6 +227,28 @@ public class RedisJsonIntegrationTests {
         JsonRangeArgs range = JsonRangeArgs.Builder.start(1).stop(2);
 
         List<Long> arrayIndex = redis.jsonArrtrim(BIKES_INVENTORY, myPath, range);
+        assertThat(arrayIndex).isNotNull();
+        assertThat(arrayIndex).hasSize(1);
+        assertThat(arrayIndex.get(0).longValue()).isEqualTo(1L);
+    }
+
+    @ParameterizedTest(name = "With {0} as path")
+    @ValueSource(strings = { BIKE_COLORS_V1, BIKE_COLORS_V2 })
+    void jsonArrtrimWithIndexes(String path) {
+        JsonPath myPath = JsonPath.of(path);
+
+        List<Long> arrayIndex = redis.jsonArrtrim(BIKES_INVENTORY, myPath, 1, 2);
+        assertThat(arrayIndex).isNotNull();
+        assertThat(arrayIndex).hasSize(1);
+        assertThat(arrayIndex.get(0).longValue()).isEqualTo(1L);
+    }
+
+    @ParameterizedTest(name = "With {0} as path")
+    @ValueSource(strings = { BIKE_COLORS_V1, BIKE_COLORS_V2 })
+    void jsonArrtrimToFirstElement(String path) {
+        JsonPath myPath = JsonPath.of(path);
+
+        List<Long> arrayIndex = redis.jsonArrtrim(BIKES_INVENTORY, myPath, 0, 0);
         assertThat(arrayIndex).isNotNull();
         assertThat(arrayIndex).hasSize(1);
         assertThat(arrayIndex.get(0).longValue()).isEqualTo(1L);
@@ -421,6 +453,26 @@ public class RedisJsonIntegrationTests {
         assertThat(value.get(0).longValue()).isEqualTo(1933L);
     }
 
+    @Test
+    void jsonNumincrbyMultiplePaths() {
+        JsonPath myPath = JsonPath.of("$..mountain_bikes[*].price");
+
+        List<Number> value = redis.jsonNumincrby(BIKES_INVENTORY, myPath, 0.5);
+        assertThat(value).hasSize(3);
+        assertThat(value.get(0).doubleValue()).isEqualTo(1928.5);
+        assertThat(value.get(1).doubleValue()).isEqualTo(2072.5);
+        assertThat(value.get(2).doubleValue()).isEqualTo(3264.5);
+    }
+
+    @Test
+    void jsonNumincrbyNonNumericPath() {
+        JsonPath myPath = JsonPath.of("$..mountain_bikes[0].model");
+
+        List<Number> value = redis.jsonNumincrby(BIKES_INVENTORY, myPath, 5L);
+        assertThat(value).hasSize(1);
+        assertThat(value.get(0)).isNull();
+    }
+
     @ParameterizedTest(name = "With {0} as path")
     @ValueSource(strings = { MOUNTAIN_BIKES_V1 + "[1]", MOUNTAIN_BIKES_V2 + "[1]" })
     void jsonObjkeys(String path) {
@@ -602,6 +654,44 @@ public class RedisJsonIntegrationTests {
     }
 
     @Test
+    void jsonTypeMissingKey() {
+        List<JsonType> result = redis.jsonType("bikes:missing", JsonPath.ROOT_PATH);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0)).isNull();
+    }
+
+    @Test
+    void rootPathCommandsShouldFailOnMissingKey() {
+        String missingKey = "bikes:missing";
+
+        assertThatThrownBy(() -> redis.jsonArrlen(missingKey)).isInstanceOf(RedisCommandExecutionException.class);
+        assertThatThrownBy(() -> redis.jsonStrlen(missingKey)).isInstanceOf(RedisCommandExecutionException.class);
+        assertThatThrownBy(() -> redis.jsonObjkeys(missingKey)).isInstanceOf(RedisCommandExecutionException.class);
+        assertThatThrownBy(() -> redis.jsonObjlen(missingKey)).isInstanceOf(RedisCommandExecutionException.class);
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void legacyRootPathShouldReturnNullOnMissingKey() {
+        List<Long> result = redis.jsonArrlen("bikes:missing", JsonPath.ROOT_PATH_LEGACY);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0)).isNull();
+    }
+
+    @Test
+    void rootPathCommandsShouldReturnNullForRootOfWrongType() {
+        redis.jsonSet("bikes:object", JsonPath.ROOT_PATH, "{\"a\":1}");
+        redis.jsonSet("bikes:array", JsonPath.ROOT_PATH, "[1,2]");
+
+        assertThat(redis.jsonArrlen("bikes:object")).containsExactly((Long) null);
+        assertThat(redis.jsonStrlen("bikes:object")).containsExactly((Long) null);
+        assertThat(redis.jsonObjlen("bikes:array")).containsExactly((Long) null);
+        assertThat(redis.jsonObjkeys("bikes:array")).containsExactly((String) null);
+    }
+
+    @Test
     void jsonAllTypes() {
         JsonPath myPath = JsonPath.of("$..mountain_bikes[1]");
 
@@ -721,7 +811,7 @@ public class RedisJsonIntegrationTests {
 
     @Test
     void withCustomParser() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+        RedisURI redisURI = ModulesTestUri.create();
 
         try (RedisClient client = RedisClient.create(redisURI)) {
             client.setOptions(ClientOptions.builder().jsonParser(CustomParser::new).build());
