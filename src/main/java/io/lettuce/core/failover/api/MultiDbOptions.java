@@ -11,6 +11,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * database configurations are managed separately via {@link DatabaseConfig}.
  *
  * @author Ali TAKAVCI
+ * @author Mosiur Zzaman
  * @since 7.4
  */
 public class MultiDbOptions {
@@ -161,7 +162,7 @@ public class MultiDbOptions {
          * Sets the grace period duration that starts when a database is failed over from. During this grace period, no
          * failbacks or failovers can trigger a switch back to that database until the duration ends.
          * <p>
-         * Defaults to 30 seconds. Set to 0 ms duration to disable grace period.
+         * Defaults to 60 seconds. Set to 0 ms duration to disable grace period.
          *
          * @param gracePeriod the grace period duration in milliseconds
          * @return this builder
